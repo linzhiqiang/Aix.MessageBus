@@ -47,6 +47,7 @@ namespace Sample
                 var messageData = new KafkaMessage { MessageId = i.ToString(), Content = $"我是内容_{i}", CreateTime = DateTime.Now };
                 await _messageBus.PublishAsync(messageData);
                 Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}生产数据：MessageId={messageData.MessageId}");
+                await Task.Delay(TimeSpan.FromSeconds(5));
             }
         }
     }

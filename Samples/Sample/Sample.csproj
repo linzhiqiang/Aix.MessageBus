@@ -16,4 +16,13 @@
     <ProjectReference Include="..\..\Aix.MessageBus\Aix.MessageBus.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="service">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Update="serviceconsumer">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
