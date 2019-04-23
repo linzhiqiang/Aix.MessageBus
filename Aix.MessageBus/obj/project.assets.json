@@ -1745,13 +1745,13 @@
     "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
   },
   "project": {
-    "version": "1.0.0",
+    "version": "1.0.1",
     "restore": {
-      "projectUniqueName": "F:\\coding\\Aix\\Aix.MessageBus\\Aix.MessageBus\\Aix.MessageBus.csproj",
+      "projectUniqueName": "F:\\github\\my\\Aix.MessageBus\\Aix.MessageBus\\Aix.MessageBus.csproj",
       "projectName": "Aix.MessageBus",
-      "projectPath": "F:\\coding\\Aix\\Aix.MessageBus\\Aix.MessageBus\\Aix.MessageBus.csproj",
+      "projectPath": "F:\\github\\my\\Aix.MessageBus\\Aix.MessageBus\\Aix.MessageBus.csproj",
       "packagesPath": "C:\\Users\\linzhiqiang\\.nuget\\packages\\",
-      "outputPath": "F:\\coding\\Aix\\Aix.MessageBus\\Aix.MessageBus\\obj\\",
+      "outputPath": "F:\\github\\my\\Aix.MessageBus\\Aix.MessageBus\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"

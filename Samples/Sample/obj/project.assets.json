@@ -754,7 +754,7 @@
           "lib/netstandard1.0/System.ValueTuple.dll": {}
         }
       },
-      "Aix.MessageBus/1.0.0": {
+      "Aix.MessageBus/1.0.1": {
         "type": "project",
         "framework": ".NETStandard,Version=v2.0",
         "dependencies": {
@@ -768,11 +768,11 @@
           "bin/placeholder/Aix.MessageBus.dll": {}
         }
       },
-      "Aix.MessageBus.Kafka/1.0.0": {
+      "Aix.MessageBus.Kafka/1.0.1": {
         "type": "project",
         "framework": ".NETStandard,Version=v2.0",
         "dependencies": {
-          "Aix.MessageBus": "1.0.0",
+          "Aix.MessageBus": "1.0.1",
           "Confluent.Kafka": "1.0.0-RC6"
         },
         "compile": {
@@ -2567,12 +2567,12 @@
         "system.valuetuple.nuspec"
       ]
     },
-    "Aix.MessageBus/1.0.0": {
+    "Aix.MessageBus/1.0.1": {
       "type": "project",
       "path": "../../Aix.MessageBus/Aix.MessageBus.csproj",
       "msbuildProject": "../../Aix.MessageBus/Aix.MessageBus.csproj"
     },
-    "Aix.MessageBus.Kafka/1.0.0": {
+    "Aix.MessageBus.Kafka/1.0.1": {
       "type": "project",
       "path": "../../Aix.MessageBus.Kafka/Aix.MessageBus.Kafka.csproj",
       "msbuildProject": "../../Aix.MessageBus.Kafka/Aix.MessageBus.Kafka.csproj"
@@ -2580,8 +2580,8 @@
   },
   "projectFileDependencyGroups": {
     ".NETCoreApp,Version=v2.2": [
-      "Aix.MessageBus >= 1.0.0",
-      "Aix.MessageBus.Kafka >= 1.0.0",
+      "Aix.MessageBus >= 1.0.1",
+      "Aix.MessageBus.Kafka >= 1.0.1",
       "CommandLineParser >= 2.4.3",
       "Microsoft.Extensions.Hosting >= 2.2.0",
       "Microsoft.Extensions.Logging.Console >= 2.2.0",
@@ -2595,11 +2595,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "F:\\coding\\Aix\\Aix.MessageBus\\Samples\\Sample\\Sample.csproj",
+      "projectUniqueName": "F:\\github\\my\\Aix.MessageBus\\Samples\\Sample\\Sample.csproj",
       "projectName": "Sample",
-      "projectPath": "F:\\coding\\Aix\\Aix.MessageBus\\Samples\\Sample\\Sample.csproj",
+      "projectPath": "F:\\github\\my\\Aix.MessageBus\\Samples\\Sample\\Sample.csproj",
       "packagesPath": "C:\\Users\\linzhiqiang\\.nuget\\packages\\",
-      "outputPath": "F:\\coding\\Aix\\Aix.MessageBus\\Samples\\Sample\\obj\\",
+      "outputPath": "F:\\github\\my\\Aix.MessageBus\\Samples\\Sample\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
@@ -2618,11 +2618,11 @@
       "frameworks": {
         "netcoreapp2.2": {
           "projectReferences": {
-            "F:\\coding\\Aix\\Aix.MessageBus\\Aix.MessageBus.Kafka\\Aix.MessageBus.Kafka.csproj": {
-              "projectPath": "F:\\coding\\Aix\\Aix.MessageBus\\Aix.MessageBus.Kafka\\Aix.MessageBus.Kafka.csproj"
+            "F:\\github\\my\\Aix.MessageBus\\Aix.MessageBus.Kafka\\Aix.MessageBus.Kafka.csproj": {
+              "projectPath": "F:\\github\\my\\Aix.MessageBus\\Aix.MessageBus.Kafka\\Aix.MessageBus.Kafka.csproj"
             },
-            "F:\\coding\\Aix\\Aix.MessageBus\\Aix.MessageBus\\Aix.MessageBus.csproj": {
-              "projectPath": "F:\\coding\\Aix\\Aix.MessageBus\\Aix.MessageBus\\Aix.MessageBus.csproj"
+            "F:\\github\\my\\Aix.MessageBus\\Aix.MessageBus\\Aix.MessageBus.csproj": {
+              "projectPath": "F:\\github\\my\\Aix.MessageBus\\Aix.MessageBus\\Aix.MessageBus.csproj"
             }
           }
         }

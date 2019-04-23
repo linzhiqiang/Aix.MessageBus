@@ -10,3 +10,15 @@ F:\coding\Aix\Aix.MessageBus\Aix.MessageBus.Kafka\obj\Release\netstandard2.0\Aix
 F:\coding\Aix\Aix.MessageBus\Aix.MessageBus.Kafka\obj\Release\netstandard2.0\Aix.MessageBus.Kafka.csproj.CopyComplete
 F:\coding\Aix\Aix.MessageBus\Aix.MessageBus.Kafka\obj\Release\netstandard2.0\Aix.MessageBus.Kafka.dll
 F:\coding\Aix\Aix.MessageBus\Aix.MessageBus.Kafka\obj\Release\netstandard2.0\Aix.MessageBus.Kafka.pdb
+F:\github\my\Aix.MessageBus\Aix.MessageBus.Kafka\bin\Release\netstandard2.0\Aix.MessageBus.Kafka.deps.json
+F:\github\my\Aix.MessageBus\Aix.MessageBus.Kafka\bin\Release\netstandard2.0\Aix.MessageBus.Kafka.dll
+F:\github\my\Aix.MessageBus\Aix.MessageBus.Kafka\bin\Release\netstandard2.0\Aix.MessageBus.Kafka.pdb
+F:\github\my\Aix.MessageBus\Aix.MessageBus.Kafka\bin\Release\netstandard2.0\Aix.MessageBus.dll
+F:\github\my\Aix.MessageBus\Aix.MessageBus.Kafka\bin\Release\netstandard2.0\Aix.MessageBus.pdb
+F:\github\my\Aix.MessageBus\Aix.MessageBus.Kafka\obj\Release\netstandard2.0\Aix.MessageBus.Kafka.csprojAssemblyReference.cache
+F:\github\my\Aix.MessageBus\Aix.MessageBus.Kafka\obj\Release\netstandard2.0\Aix.MessageBus.Kafka.csproj.CoreCompileInputs.cache
+F:\github\my\Aix.MessageBus\Aix.MessageBus.Kafka\obj\Release\netstandard2.0\Aix.MessageBus.Kafka.AssemblyInfoInputs.cache
+F:\github\my\Aix.MessageBus\Aix.MessageBus.Kafka\obj\Release\netstandard2.0\Aix.MessageBus.Kafka.AssemblyInfo.cs
+F:\github\my\Aix.MessageBus\Aix.MessageBus.Kafka\obj\Release\netstandard2.0\Aix.MessageBus.Kafka.csproj.CopyComplete
+F:\github\my\Aix.MessageBus\Aix.MessageBus.Kafka\obj\Release\netstandard2.0\Aix.MessageBus.Kafka.dll
+F:\github\my\Aix.MessageBus\Aix.MessageBus.Kafka\obj\Release\netstandard2.0\Aix.MessageBus.Kafka.pdb

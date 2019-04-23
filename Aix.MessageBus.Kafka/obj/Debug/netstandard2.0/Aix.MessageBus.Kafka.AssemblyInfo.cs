@@ -14,11 +14,11 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("linzhiqiang")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("MessageBus的kafka实现\r\n支持手工提交offset模式\r\n支持单topic和多topic模式(所有类型消息存储在单个topic或者多个topic)")]
-[assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.1.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.1")]
 [assembly: System.Reflection.AssemblyProductAttribute("linzhiqiang")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Aix.MessageBus.Kafka")]
-[assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
+[assembly: System.Reflection.AssemblyVersionAttribute("1.0.1.0")]
 
 // 由 MSBuild WriteCodeFragment 类生成。
 

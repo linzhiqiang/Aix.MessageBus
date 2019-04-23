@@ -19,6 +19,6 @@
     </dependencies>
   </metadata>
   <files>
-    <file src="F:\coding\Aix\Aix.MessageBus\Aix.MessageBus.Kafka\bin\Debug\netstandard2.0\Aix.MessageBus.Kafka.dll" target="lib\netstandard2.0\Aix.MessageBus.Kafka.dll" />
+    <file src="F:\github\my\Aix.MessageBus\Aix.MessageBus.Kafka\bin\Debug\netstandard2.0\Aix.MessageBus.Kafka.dll" target="lib\netstandard2.0\Aix.MessageBus.Kafka.dll" />
   </files>
 </package>

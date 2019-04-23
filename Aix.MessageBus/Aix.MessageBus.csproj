@@ -3,12 +3,13 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageProjectUrl>https://coding.net/u/linzhiqiang/p/Aix/git</PackageProjectUrl>
-    <RepositoryUrl>https://coding.net/u/linzhiqiang/p/Aix/git</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/linzhiqiang/Aix.MessageBus.git</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/linzhiqiang/Aix.MessageBus.git</RepositoryUrl>
     <Authors>linzhiqiang</Authors>
     <Company>linzhiqiang</Company>
     <Product>linzhiqiang</Product>
     <Description>MessageBus接口定义</Description>
+    <Version>1.0.1</Version>
   </PropertyGroup>
 
   <ItemGroup>

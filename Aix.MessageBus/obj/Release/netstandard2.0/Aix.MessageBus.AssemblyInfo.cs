@@ -14,11 +14,11 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("linzhiqiang")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyDescriptionAttribute("MessageBus接口定义")]
-[assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0")]
+[assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.1.0")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.1")]
 [assembly: System.Reflection.AssemblyProductAttribute("linzhiqiang")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Aix.MessageBus")]
-[assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
+[assembly: System.Reflection.AssemblyVersionAttribute("1.0.1.0")]
 
 // 由 MSBuild WriteCodeFragment 类生成。
 
