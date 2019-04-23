@@ -50,6 +50,7 @@ namespace Aix.MessageBus.Kafka.Impl
 
         public void Close()
         {
+            this._isStart = false;
             With.NoException(_logger, () => { this._consumer?.Close(); }, "关闭消费者");
         }
 
