@@ -1,0 +1,8 @@
+F:\coding\Aix\Aix.MessageBus\Aix.MessageBus\bin\Debug\netstandard2.0\Aix.MessageBus.deps.json
+F:\coding\Aix\Aix.MessageBus\Aix.MessageBus\bin\Debug\netstandard2.0\Aix.MessageBus.dll
+F:\coding\Aix\Aix.MessageBus\Aix.MessageBus\bin\Debug\netstandard2.0\Aix.MessageBus.pdb
+F:\coding\Aix\Aix.MessageBus\Aix.MessageBus\obj\Debug\netstandard2.0\Aix.MessageBus.csproj.CoreCompileInputs.cache
+F:\coding\Aix\Aix.MessageBus\Aix.MessageBus\obj\Debug\netstandard2.0\Aix.MessageBus.AssemblyInfoInputs.cache
+F:\coding\Aix\Aix.MessageBus\Aix.MessageBus\obj\Debug\netstandard2.0\Aix.MessageBus.AssemblyInfo.cs
+F:\coding\Aix\Aix.MessageBus\Aix.MessageBus\obj\Debug\netstandard2.0\Aix.MessageBus.dll
+F:\coding\Aix\Aix.MessageBus\Aix.MessageBus\obj\Debug\netstandard2.0\Aix.MessageBus.pdb

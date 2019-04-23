@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageProjectUrl>https://coding.net/u/linzhiqiang/p/Aix/git</PackageProjectUrl>
+    <RepositoryUrl>https://coding.net/u/linzhiqiang/p/Aix/git</RepositoryUrl>
+    <Authors>linzhiqiang</Authors>
+    <Company>linzhiqiang</Company>
+    <Product>linzhiqiang</Product>
+    <Description>MessageBus接口定义</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MessagePack" Version="1.7.3.4" />
+    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.2.0" />
+  </ItemGroup>
+
+</Project>

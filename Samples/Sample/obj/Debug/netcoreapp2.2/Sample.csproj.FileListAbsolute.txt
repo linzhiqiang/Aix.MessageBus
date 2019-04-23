@@ -1,0 +1,16 @@
+F:\coding\Aix\Aix.MessageBus\Samples\Sample\bin\Debug\netcoreapp2.2\Sample.deps.json
+F:\coding\Aix\Aix.MessageBus\Samples\Sample\bin\Debug\netcoreapp2.2\Sample.runtimeconfig.json
+F:\coding\Aix\Aix.MessageBus\Samples\Sample\bin\Debug\netcoreapp2.2\Sample.runtimeconfig.dev.json
+F:\coding\Aix\Aix.MessageBus\Samples\Sample\bin\Debug\netcoreapp2.2\Sample.dll
+F:\coding\Aix\Aix.MessageBus\Samples\Sample\bin\Debug\netcoreapp2.2\Aix.MessageBus.dll
+F:\coding\Aix\Aix.MessageBus\Samples\Sample\bin\Debug\netcoreapp2.2\Aix.MessageBus.Kafka.dll
+F:\coding\Aix\Aix.MessageBus\Samples\Sample\bin\Debug\netcoreapp2.2\Aix.MessageBus.Kafka.pdb
+F:\coding\Aix\Aix.MessageBus\Samples\Sample\bin\Debug\netcoreapp2.2\Aix.MessageBus.pdb
+F:\coding\Aix\Aix.MessageBus\Samples\Sample\obj\Debug\netcoreapp2.2\Sample.csprojAssemblyReference.cache
+F:\coding\Aix\Aix.MessageBus\Samples\Sample\obj\Debug\netcoreapp2.2\Sample.csproj.CoreCompileInputs.cache
+F:\coding\Aix\Aix.MessageBus\Samples\Sample\obj\Debug\netcoreapp2.2\Sample.AssemblyInfoInputs.cache
+F:\coding\Aix\Aix.MessageBus\Samples\Sample\obj\Debug\netcoreapp2.2\Sample.AssemblyInfo.cs
+F:\coding\Aix\Aix.MessageBus\Samples\Sample\obj\Debug\netcoreapp2.2\Sample.csproj.CopyComplete
+F:\coding\Aix\Aix.MessageBus\Samples\Sample\bin\Debug\netcoreapp2.2\Sample.pdb
+F:\coding\Aix\Aix.MessageBus\Samples\Sample\obj\Debug\netcoreapp2.2\Sample.dll
+F:\coding\Aix\Aix.MessageBus\Samples\Sample\obj\Debug\netcoreapp2.2\Sample.pdb
