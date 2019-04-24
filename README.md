@@ -9,7 +9,7 @@
  var messageData = new KafkaMessage { MessageId = i.ToString(), Content = $"我是内容_{i}", CreateTime = DateTime.Now };
   await _messageBus.PublishAsync(messageData);
   
-  4 订阅消息 根据泛型类型区分不同类型的订阅
+4 订阅消息 根据泛型类型区分不同类型的订阅
    await _messageBus.SubscribeAsync<KafkaMessage>(async (message) =>
    {
        var current = Interlocked.Increment(ref Count);
