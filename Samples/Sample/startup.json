@@ -7,7 +7,7 @@
       "exec_interpreter": "bash",
       "cwd": "./messagebus",
       "error_file": "/home/dotnet/logs/messagebus-producer/console-error.log",
-      "out_file": "/home/dotnet//logs/messagebus-producer/console.log",
+      "out_file": "/home/dotnet/logs/messagebus-producer/console.log",
       "max_memory_restart": "500M"
     },
     {
@@ -17,7 +17,7 @@
       "exec_interpreter": "bash",
       "cwd": "./messagebus",
       "error_file": "/home/dotnet/logs/messagebus-consumer/console-error.log",
-      "out_file": "/home/dotnet//logs/messagebus-consumer/console.log",
+      "out_file": "/home/dotnet/logs/messagebus-consumer/console.log",
       "max_memory_restart": "500M"
     }
   ]
