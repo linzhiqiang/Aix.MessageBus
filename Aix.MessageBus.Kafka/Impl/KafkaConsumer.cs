@@ -129,7 +129,7 @@ namespace Aix.MessageBus.Kafka.Impl
             var consumer = new ConsumerBuilder<TKey, TValue>(_kafkaOptions.ConsumerConfig)
                   .SetErrorHandler((producer, error) =>
                   {
-                      _logger.LogError($"Kafka生产者出错：{error.Reason}");
+                      _logger.LogError($"Kafka消费则出错：{error.Code}-{error.Reason}");
                   })
                   .SetPartitionsRevokedHandler((c, partitions) =>
                   {

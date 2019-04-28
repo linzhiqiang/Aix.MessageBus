@@ -57,14 +57,15 @@ namespace Sample
                     AddKafkaMessageBus(services, mode);
                     //AddInMemoryMessageBus(services);
 
-                    if ((mode & KafkaMessageBusMode.Consumer) > 0 || (mode & KafkaMessageBusMode.Both) > 0)
+                    if ((mode & KafkaMessageBusMode.Consumer) > 0)
                     {
                         services.AddHostedService<MessageBusConsumeService>();
                     }
-                    if ((mode & KafkaMessageBusMode.Producer) > 0 || (mode & KafkaMessageBusMode.Both) > 0)
+                    if ((mode & KafkaMessageBusMode.Producer) > 0)
                     {
                         services.AddHostedService<MessageBusProduerService>();
                     }
+
                 });
             Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}开始");
             host.RunConsoleAsync().Wait();
@@ -93,12 +94,13 @@ namespace Sample
         private static void AddKafkaMessageBus(IServiceCollection services, KafkaMessageBusMode mode)
         {
             var bootstrapServers = "192.168.111.132:9092,192.168.111.132:9093,192.168.111.132:9094";// com 虚拟机
-                                                                                                    // bootstrapServers = "192.168.72.130:9092,192.168.72.130:9093,192.168.72.130:9094";//home 虚拟机
-           // bootstrapServers = "117.48.234.104:9092";
+            bootstrapServers = "192.168.72.131:9092,192.168.72.131:9093,192.168.72.131:9094";//home 虚拟机
+            
+            // bootstrapServers = "117.48.234.104:9092";
             var options = new KafkaMessageBusOptions
             {
                 KafkaMessageBusMode = mode,
-                TopicPrefix = "kafka", //项目名称
+                TopicPrefix = "kafka1", //项目名称
                 TopicMode = TopicMode.multiple,
                 Serializer = new MessagePackSerializer(), //默认也是该值
                 ConsumerThreadCount = 4, //总部署线程数不要大于分区数

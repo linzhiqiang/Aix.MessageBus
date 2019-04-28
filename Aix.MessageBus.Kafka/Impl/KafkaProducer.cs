@@ -55,13 +55,14 @@ namespace Aix.MessageBus.Kafka.Impl
                 IProducer<TKey, TValue> producer = new ProducerBuilder<TKey, TValue>(_kafkaOptions.ProducerConfig)
                 .SetErrorHandler((p, error) =>
                 {
-                    _logger.LogError($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}Kafka生产者出错：{error.Reason}");
+                    _logger.LogError($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}Kafka生产者出错：{error.Code}-{error.Reason}");
                 })
                //.SetKeySerializer(new ConfluentKafkaSerializerAdapter<TKey>(_kafkaOptions.Serializer))
                .SetValueSerializer(new ConfluentKafkaSerializerAdapter<TValue>(_kafkaOptions.Serializer))
                .Build();
 
                 this._producer = producer;
+                this._producer.Poll(TimeSpan.Zero);
             }
         }
 

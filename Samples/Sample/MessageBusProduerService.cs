@@ -39,7 +39,7 @@ namespace Sample
 
         private async Task Producer(CancellationToken cancellationToken)
         {
-           // await Task.Delay(TimeSpan.FromMinutes(32));
+           //await Task.Delay(TimeSpan.FromMinutes(32));
             int producerCount = _cmdOptions.Count > 0 ? _cmdOptions.Count : 1;
             for (int i = 0; i < producerCount; i++)
             {
