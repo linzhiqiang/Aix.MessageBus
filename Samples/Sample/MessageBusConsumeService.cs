@@ -51,8 +51,8 @@ namespace Sample
             await _messageBus.SubscribeAsync<KafkaMessage>(async (message) =>
             {
                 var current = Interlocked.Increment(ref Count);
-                Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费数据：MessageId={message.MessageId},Content={message.Content},count={current}");
-                await Task.Delay(100);
+                _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费数据：MessageId={message.MessageId},Content={message.Content},count={current}");
+               // await Task.Delay(100);
                 await Task.CompletedTask;
             });
         }

@@ -10,7 +10,7 @@ namespace Aix.MessageBus.Kafka
     {
         Producer = 1,
         Consumer = 2,
-        Both = 3
+        Both = 4
     }
 
     public enum TopicMode

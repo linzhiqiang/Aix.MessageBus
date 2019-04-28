@@ -40,7 +40,6 @@ namespace Sample
         }
         static void Run(CmdOptions options)
         {
-            Console.WriteLine(options.Count);
             var host = new HostBuilder()
                 .ConfigureAppConfiguration((hostContext, config) =>
                 {
@@ -58,7 +57,6 @@ namespace Sample
                     AddKafkaMessageBus(services, mode);
                     //AddInMemoryMessageBus(services);
 
-
                     if ((mode & KafkaMessageBusMode.Consumer) > 0 || (mode & KafkaMessageBusMode.Both) > 0)
                     {
                         services.AddHostedService<MessageBusConsumeService>();
@@ -68,6 +66,7 @@ namespace Sample
                         services.AddHostedService<MessageBusProduerService>();
                     }
                 });
+            Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}开始");
             host.RunConsoleAsync().Wait();
             Console.WriteLine("服务已退出");
         }
@@ -95,6 +94,7 @@ namespace Sample
         {
             var bootstrapServers = "192.168.111.132:9092,192.168.111.132:9093,192.168.111.132:9094";// com 虚拟机
                                                                                                     // bootstrapServers = "192.168.72.130:9092,192.168.72.130:9093,192.168.72.130:9094";//home 虚拟机
+           // bootstrapServers = "117.48.234.104:9092";
             var options = new KafkaMessageBusOptions
             {
                 KafkaMessageBusMode = mode,

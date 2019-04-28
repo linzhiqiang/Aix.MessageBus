@@ -18,7 +18,7 @@
 
   <ItemGroup>
     <None Update="service">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="serviceconsumer">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
