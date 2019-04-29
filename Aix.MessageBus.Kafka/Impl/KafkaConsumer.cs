@@ -12,6 +12,11 @@ using System.Threading.Tasks;
 
 namespace Aix.MessageBus.Kafka.Impl
 {
+    /// <summary>
+    /// kafka消费者
+    /// </summary>
+    /// <typeparam name="TKey"></typeparam>
+    /// <typeparam name="TValue"></typeparam>
     internal class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue>
     {
         private IServiceProvider _serviceProvider;
@@ -129,7 +134,7 @@ namespace Aix.MessageBus.Kafka.Impl
             var consumer = new ConsumerBuilder<TKey, TValue>(_kafkaOptions.ConsumerConfig)
                   .SetErrorHandler((producer, error) =>
                   {
-                      _logger.LogError($"Kafka消费则出错：{error.Code}-{error.Reason}");
+                      _logger.LogError($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}Kafka消费者出错：{error.Code}-{error.Reason},IsLocalError:{error.IsLocalError}, IsBrokerError:{error.IsBrokerError}");
                   })
                   .SetPartitionsRevokedHandler((c, partitions) =>
                   {
@@ -151,13 +156,16 @@ namespace Aix.MessageBus.Kafka.Impl
                       }
                       _logger.LogInformation($"MemberId:{c.MemberId}分配的分区：Assigned partitions: [{string.Join(", ", partitions)}]");
                   })
-                //.SetKeyDeserializer(new ConfluentKafkaSerializerAdapter<TKey>(_kafkaOptions.Serializer))
                 .SetValueDeserializer(new ConfluentKafkaSerializerAdapter<TValue>(_kafkaOptions.Serializer))
                 .Build();
 
             return consumer;
         }
 
+        /// <summary>
+        /// 是否是自动提交
+        /// </summary>
+        /// <returns></returns>
         private bool EnableAutoCommit()
         {
             var enableAutoCommit = this._kafkaOptions.ConsumerConfig.EnableAutoCommit;

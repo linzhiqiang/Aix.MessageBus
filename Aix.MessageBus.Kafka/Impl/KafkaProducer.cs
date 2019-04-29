@@ -9,6 +9,11 @@ using System.Threading.Tasks;
 
 namespace Aix.MessageBus.Kafka.Impl
 {
+    /// <summary>
+    /// kafka生产者实现
+    /// </summary>
+    /// <typeparam name="TKey"></typeparam>
+    /// <typeparam name="TValue"></typeparam>
     internal class KafkaProducer<TKey, TValue> : IKafkaProducer<TKey, TValue>
     {
         private IServiceProvider _serviceProvider;
@@ -55,14 +60,12 @@ namespace Aix.MessageBus.Kafka.Impl
                 IProducer<TKey, TValue> producer = new ProducerBuilder<TKey, TValue>(_kafkaOptions.ProducerConfig)
                 .SetErrorHandler((p, error) =>
                 {
-                    _logger.LogError($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}Kafka生产者出错：{error.Code}-{error.Reason}");
+                    _logger.LogError($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}Kafka生产者出错：{error.Code}-{error.Reason},IsLocalError:{error.IsLocalError}, IsBrokerError:{error.IsBrokerError}");
                 })
-               //.SetKeySerializer(new ConfluentKafkaSerializerAdapter<TKey>(_kafkaOptions.Serializer))
                .SetValueSerializer(new ConfluentKafkaSerializerAdapter<TValue>(_kafkaOptions.Serializer))
                .Build();
 
                 this._producer = producer;
-                this._producer.Poll(TimeSpan.Zero);
             }
         }
 

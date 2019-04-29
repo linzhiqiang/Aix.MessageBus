@@ -94,9 +94,8 @@ namespace Sample
         private static void AddKafkaMessageBus(IServiceCollection services, KafkaMessageBusMode mode)
         {
             var bootstrapServers = "192.168.111.132:9092,192.168.111.132:9093,192.168.111.132:9094";// com 虚拟机
-            bootstrapServers = "192.168.72.131:9092,192.168.72.131:9093,192.168.72.131:9094";//home 虚拟机
+            //bootstrapServers = "192.168.72.131:9092,192.168.72.131:9093,192.168.72.131:9094";//home 虚拟机
             
-            // bootstrapServers = "117.48.234.104:9092";
             var options = new KafkaMessageBusOptions
             {
                 KafkaMessageBusMode = mode,
