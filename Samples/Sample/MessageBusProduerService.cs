@@ -39,9 +39,9 @@ namespace Sample
 
         private async Task Producer(CancellationToken cancellationToken)
         {
-            while (!cancellationToken.IsCancellationRequested)
+            //while (!cancellationToken.IsCancellationRequested)
             {
-                await Task.Delay(TimeSpan.FromMinutes(35));
+                //await Task.Delay(TimeSpan.FromMinutes(35));
                 int producerCount = _cmdOptions.Count > 0 ? _cmdOptions.Count : 1;
                 for (int i = 0; i < producerCount; i++)
                 {
@@ -50,7 +50,7 @@ namespace Sample
                     var messageData = new KafkaMessage { MessageId = i.ToString(), Content = $"我是内容_{i}", CreateTime = DateTime.Now };
                     await _messageBus.PublishAsync(messageData);
                     _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}生产数据：MessageId={messageData.MessageId}");
-                    await Task.Delay(TimeSpan.FromSeconds(1));
+                    //await Task.Delay(TimeSpan.FromSeconds(1));
                 }
             }
         }
