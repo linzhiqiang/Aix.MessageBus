@@ -39,16 +39,19 @@ namespace Sample
 
         private async Task Producer(CancellationToken cancellationToken)
         {
-           await Task.Delay(TimeSpan.FromMinutes(22));
-            int producerCount = _cmdOptions.Count > 0 ? _cmdOptions.Count : 1;
-            for (int i = 0; i < producerCount; i++)
+            while (!cancellationToken.IsCancellationRequested)
             {
-                if (cancellationToken.IsCancellationRequested) break;
+                await Task.Delay(TimeSpan.FromMinutes(35));
+                int producerCount = _cmdOptions.Count > 0 ? _cmdOptions.Count : 1;
+                for (int i = 0; i < producerCount; i++)
+                {
+                    if (cancellationToken.IsCancellationRequested) break;
 
-                var messageData = new KafkaMessage { MessageId = i.ToString(), Content = $"我是内容_{i}", CreateTime = DateTime.Now };
-                await _messageBus.PublishAsync(messageData);
-                _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}生产数据：MessageId={messageData.MessageId}");
-                await Task.Delay(TimeSpan.FromSeconds(1));
+                    var messageData = new KafkaMessage { MessageId = i.ToString(), Content = $"我是内容_{i}", CreateTime = DateTime.Now };
+                    await _messageBus.PublishAsync(messageData);
+                    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}生产数据：MessageId={messageData.MessageId}");
+                    await Task.Delay(TimeSpan.FromSeconds(1));
+                }
             }
         }
     }

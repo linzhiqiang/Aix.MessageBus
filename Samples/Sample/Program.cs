@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Threading.Tasks;
 
 namespace Sample
 {
@@ -21,7 +22,7 @@ namespace Sample
     /// </summary>
     public class CmdOptions
     {
-        [Option('m', "mode", Required = false, Default = "c", HelpText = "p=生产者测试，c=消费者测试,a=同时测试")]
+        [Option('m', "mode", Required = false, Default = "p", HelpText = "p=生产者测试，c=消费者测试,a=同时测试")]
         public string Mode { get; set; }
 
         [Option('q', "quantity", Required = false, Default = 1, HelpText = "测试生产数量")]
@@ -40,6 +41,7 @@ namespace Sample
         }
         static void Run(CmdOptions options)
         {
+            TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
             var host = new HostBuilder()
                 .ConfigureAppConfiguration((hostContext, config) =>
                 {
@@ -72,6 +74,17 @@ namespace Sample
             Console.WriteLine("服务已退出");
         }
 
+        private static void TaskScheduler_UnobservedTaskException(object sender, UnobservedTaskExceptionEventArgs e)
+        {
+            try
+            {
+                Console.WriteLine(e.Exception.ToString());
+            }
+            catch
+            {
+            }
+        }
+
         private static KafkaMessageBusMode GetTestMode(CmdOptions options)
         {
             KafkaMessageBusMode mode = 0;
@@ -99,7 +112,7 @@ namespace Sample
             var options = new KafkaMessageBusOptions
             {
                 KafkaMessageBusMode = mode,
-                TopicPrefix = "kafka1", //项目名称
+                TopicPrefix = "Kafka1", //项目名称
                 TopicMode = TopicMode.multiple,
                 Serializer = new MessagePackSerializer(), //默认也是该值
                 ConsumerThreadCount = 4, //总部署线程数不要大于分区数

@@ -134,7 +134,8 @@ namespace Aix.MessageBus.Kafka.Impl
             var consumer = new ConsumerBuilder<TKey, TValue>(_kafkaOptions.ConsumerConfig)
                   .SetErrorHandler((producer, error) =>
                   {
-                      _logger.LogError($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}Kafka消费者出错：{error.Code}-{error.Reason},IsLocalError:{error.IsLocalError}, IsBrokerError:{error.IsBrokerError}");
+                      string errorInfo = $"{error.Code}-{error.Reason}, IsFatal={error.IsFatal}, IsLocalError:{error.IsLocalError}, IsBrokerError:{error.IsBrokerError}";
+                      _logger.LogError($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}Kafka消费者出错：{errorInfo}");
                   })
                   .SetPartitionsRevokedHandler((c, partitions) =>
                   {
