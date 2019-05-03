@@ -35,6 +35,7 @@ namespace Aix.MessageBus.Kafka
             this.Serializer = new MessagePackSerializer();
             this.ConsumerThreadCount = 4;
             this.TopicMode = TopicMode.multiple;
+            this.ManualCommitBatch = 5;
         }
 
         public ProducerConfig ProducerConfig { get; set; }
@@ -65,5 +66,10 @@ namespace Aix.MessageBus.Kafka
         /// 不同类型消息是单个topic 还是多topic,默认值是多topic
         /// </summary>
         public TopicMode TopicMode { get; set; }
+
+        /// <summary>
+        /// 手工提交的批次 没多少个提交一次 默认5个提交一次
+        /// </summary>
+        public int ManualCommitBatch { get; set; }
     }
 }

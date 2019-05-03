@@ -30,6 +30,7 @@ namespace Aix.MessageBus.Kafka.Impl
         /// </summary>
         private ConcurrentDictionary<TopicPartition, TopicPartitionOffset> _offsetDict = new ConcurrentDictionary<TopicPartition, TopicPartitionOffset>();
         private volatile bool _isStart = false;
+        private int Count = 0;
 
         public event Func<ConsumeResult<TKey, TValue>, Task> OnMessage;
         public KafkaConsumer(IServiceProvider serviceProvider)
@@ -56,6 +57,14 @@ namespace Aix.MessageBus.Kafka.Impl
         public void Close()
         {
             this._isStart = false;
+            With.NoException(_logger, () =>
+            {
+                if (EnableAutoCommit() == false)
+                {
+                    this._consumer.Commit();
+                }
+            }, "关闭消费者时提交偏移量");
+
             With.NoException(_logger, () => { this._consumer?.Close(); }, "关闭消费者");
         }
 
@@ -80,6 +89,7 @@ namespace Aix.MessageBus.Kafka.Impl
                         {
                             continue;
                         }
+                        Count++;
                         //消费数据
                         await Handler(result);
 
@@ -88,10 +98,14 @@ namespace Aix.MessageBus.Kafka.Impl
                         {
                             var topicPartition = result.TopicPartition;
                             var topicPartitionOffset = new TopicPartitionOffset(topicPartition, result.Offset + 1);
-                            AddToOffsetDict(topicPartition, topicPartitionOffset); //加入offset缓存
+                            AddToOffsetDict(topicPartition, topicPartitionOffset); //加入offset缓存 加入缓存在handler之后处理，就是至少一次，在handler之前加入缓存，就是至多一次
 
-                            _offsetDict.TryGetValue(topicPartition, out TopicPartitionOffset maxOffset); //取出最大的offset提交，可能并发当前的不是最大的
-                            this._consumer.Commit(new[] { maxOffset }); //if (maxOffset.Offset == topicPartitionOffset.Offset) 
+                            if (Count % _kafkaOptions.ManualCommitBatch == 0)
+                            {
+                                _offsetDict.TryGetValue(topicPartition, out TopicPartitionOffset maxOffset); //取出最大的offset提交，可能并发当前的不是最大的
+                                this._consumer.Commit(new[] { maxOffset });
+                            }
+
                         }
                     }
                 }

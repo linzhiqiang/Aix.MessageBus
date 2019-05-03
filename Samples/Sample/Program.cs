@@ -107,7 +107,7 @@ namespace Sample
         private static void AddKafkaMessageBus(IServiceCollection services, KafkaMessageBusMode mode)
         {
             var bootstrapServers = "192.168.111.132:9092,192.168.111.132:9093,192.168.111.132:9094";// com 虚拟机
-            //bootstrapServers = "192.168.72.131:9092,192.168.72.131:9093,192.168.72.131:9094";//home 虚拟机
+            bootstrapServers = "192.168.72.132:9092,192.168.72.132:9093,192.168.72.132:9094";//home 虚拟机
             
             var options = new KafkaMessageBusOptions
             {
@@ -115,7 +115,8 @@ namespace Sample
                 TopicPrefix = "Kafka1", //项目名称
                 TopicMode = TopicMode.multiple,
                 Serializer = new MessagePackSerializer(), //默认也是该值
-                ConsumerThreadCount = 4, //总部署线程数不要大于分区数
+                ConsumerThreadCount = 1, //总部署线程数不要大于分区数
+                 ManualCommitBatch=1,
                 ProducerConfig = new ProducerConfig
                 {
                     BootstrapServers = bootstrapServers,

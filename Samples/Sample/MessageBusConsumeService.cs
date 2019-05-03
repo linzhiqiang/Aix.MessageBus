@@ -52,7 +52,7 @@ namespace Sample
             {
                 var current = Interlocked.Increment(ref Count);
                 _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费数据：MessageId={message.MessageId},Content={message.Content},count={current}");
-                await Task.Delay(10);
+                await Task.Delay(1000);
                 await Task.CompletedTask;
             });
         }
