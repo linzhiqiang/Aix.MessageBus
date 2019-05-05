@@ -61,7 +61,7 @@ namespace Sample
 
                 await Task.CompletedTask;
 
-                if (current == 100000)
+                if (current % 10000==0)
                 {
                     duration.Stop();
                     var totalMilliseconds = duration.ElapsedMilliseconds;//执行任务的时间

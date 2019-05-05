@@ -57,6 +57,7 @@ namespace Aix.MessageBus.Kafka.Impl
         public void Close()
         {
             this._isStart = false;
+            _logger.LogInformation("Kafka关闭消费者");
             With.NoException(_logger, () =>
             {
                 if (EnableAutoCommit() == false)

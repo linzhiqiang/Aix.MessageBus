@@ -115,7 +115,6 @@ namespace Aix.MessageBus.Kafka
             _logger.LogInformation("KafkaMessageBus 释放...");
             With.NoException(_logger, () => { _producer?.Dispose(); }, "关闭生产者");
 
-            _logger.LogInformation("KafkaMessageBus 关闭消费者");
             foreach (var item in _consumerList)
             {
                 item.Close();
