@@ -3,6 +3,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -48,12 +49,25 @@ namespace Sample
 
         private async Task Subscribe(CancellationToken cancellationToken)
         {
+            Stopwatch duration = null;
             await _messageBus.SubscribeAsync<KafkaMessage>(async (message) =>
             {
+                if (Count == 0)
+                {
+                    duration = Stopwatch.StartNew();
+                }
                 var current = Interlocked.Increment(ref Count);
-                _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费数据：MessageId={message.MessageId},Content={message.Content},count={current}");
-                await Task.Delay(1000);
+                //_logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费数据：MessageId={message.MessageId},Content={message.Content},count={current}");
+
                 await Task.CompletedTask;
+
+                if (current == 100000)
+                {
+                    duration.Stop();
+                    var totalMilliseconds = duration.ElapsedMilliseconds;//执行任务的时间
+                    _logger.LogInformation($"ElapsedMilliseconds={duration.ElapsedMilliseconds}");
+                    _logger.LogInformation($"消费效率={current * 1.0 / totalMilliseconds}");
+                }
             });
         }
     }
