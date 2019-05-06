@@ -57,7 +57,7 @@ namespace Sample
                     duration = Stopwatch.StartNew();
                 }
                 var current = Interlocked.Increment(ref Count);
-                //_logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费数据：MessageId={message.MessageId},Content={message.Content},count={current}");
+                _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费数据：MessageId={message.MessageId},Content={message.Content},count={current}");
 
                 await Task.CompletedTask;
 

@@ -49,11 +49,11 @@ namespace Aix.MessageBus.Kafka
             }
             _cancellationToken = cancellationToken;
 
-            if ((_kafkaOptions.KafkaMessageBusMode & KafkaMessageBusMode.Producer) == KafkaMessageBusMode.Producer)
+            if ((_kafkaOptions.ClientMode & ClientMode.Producer) == ClientMode.Producer)
             {
                 this._producer = new KafkaProducer<Null, MessageBusData>(this._serviceProvider);
             }
-            if ((_kafkaOptions.KafkaMessageBusMode & KafkaMessageBusMode.Consumer) == KafkaMessageBusMode.Consumer)
+            if ((_kafkaOptions.ClientMode & ClientMode.Consumer) == ClientMode.Consumer)
             {
                 //消费者连接订阅时再创建
                 foreach (var type in _subscriberTypeSet)
@@ -167,13 +167,13 @@ namespace Aix.MessageBus.Kafka
         {
             if (this._kafkaOptions.TopicMode == TopicMode.Single)
             {
-                return GetTopic("MessageBus");
+                return GetTopic(this._kafkaOptions.Topic);
             }
             return GetTopic(type.Name);
         }
         private string GetTopic(string name)
         {
-            return $"{_kafkaOptions.TopicPrefix}-{name}";
+            return $"{_kafkaOptions.TopicPrefix ?? ""}{name}";
         }
 
         #endregion

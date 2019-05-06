@@ -55,8 +55,15 @@ namespace Aix.MessageBus.Kafka.Impl
             {
                 if (this._producer != null) return;
 
-                if (_kafkaOptions.ProducerConfig == null) throw new Exception("请配置ProducerConfig参数");
-                if (string.IsNullOrEmpty(_kafkaOptions.ProducerConfig.BootstrapServers)) throw new Exception("请配置ProducerConfig.BootstrapServers参数");
+                if (_kafkaOptions.ProducerConfig == null) _kafkaOptions.ProducerConfig = new ProducerConfig();
+                if (string.IsNullOrEmpty(_kafkaOptions.ProducerConfig.BootstrapServers))
+                {
+                    _kafkaOptions.ProducerConfig.BootstrapServers = _kafkaOptions.BootstrapServers;
+                }
+                if (string.IsNullOrEmpty(_kafkaOptions.ProducerConfig.BootstrapServers))
+                {
+                    throw new Exception("kafka BootstrapServers参数");
+                }
                 IProducer<TKey, TValue> producer = new ProducerBuilder<TKey, TValue>(_kafkaOptions.ProducerConfig)
                 .SetErrorHandler((p, error) =>
                 {
