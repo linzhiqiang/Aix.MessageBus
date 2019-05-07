@@ -1,5 +1,6 @@
 ﻿using Aix.MessageBus;
 using Aix.MessageBus.Kafka;
+using Aix.MessageBus.Utils;
 using CommandLine;
 using Confluent.Kafka;
 using Microsoft.Extensions.Configuration;
@@ -69,6 +70,9 @@ namespace Sample
 
                     services.AddSingleton(options);
                     var kafkaMessageBusOptions = context.Configuration.GetSection("kafka").Get<KafkaMessageBusOptions>();
+
+                   // var  test = ObjectUtils.Copy(kafkaMessageBusOptions.ConsumerConfig);
+
                     kafkaMessageBusOptions.ClientMode = options.Mode;//这里方便测试，以命令行参数为准
                     services.AddKafkaMessageBus(kafkaMessageBusOptions);
 
