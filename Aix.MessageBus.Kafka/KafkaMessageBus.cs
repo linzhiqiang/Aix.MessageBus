@@ -147,9 +147,6 @@ namespace Aix.MessageBus.Kafka
             if (!hasHandler || list == null) return;
             foreach (var item in list)
             {
-                if (this._cancellationToken.IsCancellationRequested)
-                    continue;
-
                 if (this._cancellationToken.IsCancellationRequested) return;
                 await With.NoException(_logger, async () =>
                 {
@@ -160,7 +157,8 @@ namespace Aix.MessageBus.Kafka
 
         private string GetHandlerKey(Type type)
         {
-            return type.FullName;
+            //return type.FullName;
+            return String.Concat(type.FullName, ", ", type.Assembly.GetName().Name);
         }
 
         private string GetTopic(Type type)
