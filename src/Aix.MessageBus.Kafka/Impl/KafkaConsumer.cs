@@ -57,6 +57,7 @@ namespace Aix.MessageBus.Kafka.Impl
         public void Close()
         {
             this._isStart = false;
+            _logger.LogInformation("Kafka关闭消费者");
             With.NoException(_logger, () =>
             {
                 if (EnableAutoCommit() == false)
@@ -77,35 +78,29 @@ namespace Aix.MessageBus.Kafka.Impl
 
         private Task StartPoll(CancellationToken cancellationToken)
         {
-            Task.Run(async () =>
+            Task.Factory.StartNew(async () =>
             {
+                _logger.LogInformation("开始消费数据...");
                 try
                 {
-                    _logger.LogInformation("开始消费数据...");
+
                     while (_isStart && !cancellationToken.IsCancellationRequested)
                     {
-                        var result = this._consumer.Consume(TimeSpan.FromSeconds(1));
-                        if (result == null || result.IsPartitionEOF || result.Value == null)
+                        try
                         {
-                            continue;
+                            await Consume();
                         }
-                        Count++;
-                        //消费数据
-                        await Handler(result);
-
-                        //处理手动提交
-                        if (EnableAutoCommit() == false)
+                        catch (ConsumeException ex)
                         {
-                            var topicPartition = result.TopicPartition;
-                            var topicPartitionOffset = new TopicPartitionOffset(topicPartition, result.Offset + 1);
-                            AddToOffsetDict(topicPartition, topicPartitionOffset); //加入offset缓存 加入缓存在handler之后处理，就是至少一次，在handler之前加入缓存，就是至多一次
-
-                            if (Count % _kafkaOptions.ManualCommitBatch == 0)
-                            {
-                                _offsetDict.TryGetValue(topicPartition, out TopicPartitionOffset maxOffset); //取出最大的offset提交，可能并发当前的不是最大的
-                                this._consumer.Commit(new[] { maxOffset });
-                            }
-
+                            _logger.LogError($"消费拉取消息ConsumeException, {ex.Message}, {ex.StackTrace}");
+                        }
+                        catch (KafkaException ex)
+                        {
+                            _logger.LogError($"消费拉取消息KafkaException, {ex.Message}, {ex.StackTrace}");
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError($"消费拉取消息系统异常, {ex.Message}, {ex.StackTrace}");
                         }
                     }
                 }
@@ -120,15 +115,61 @@ namespace Aix.MessageBus.Kafka.Impl
                 }
             });
 
-
             return Task.CompletedTask;
+        }
+
+        private async Task Consume()
+        {
+            var result = this._consumer.Consume(TimeSpan.FromSeconds(1));
+            if (result == null || result.IsPartitionEOF || result.Value == null)
+            {
+                return;
+            }
+            Count++;
+            //消费数据
+            await Handler(result);
+
+            //处理手动提交
+            ManualCommitOffset(result); //采用后提交（至少一次）,消费前提交（至多一次）
+        }
+
+
+        /// <summary>
+        /// 手工提交offset
+        /// </summary>
+        /// <param name="result"></param>
+        private void ManualCommitOffset(ConsumeResult<TKey, TValue> result)
+        {
+            //处理手动提交
+            if (EnableAutoCommit() == false)
+            {
+                var topicPartition = result.TopicPartition;
+                var topicPartitionOffset = new TopicPartitionOffset(topicPartition, result.Offset + 1);
+                AddToOffsetDict(topicPartition, topicPartitionOffset); //加入offset缓存 
+
+                if (Count % _kafkaOptions.ManualCommitBatch == 0)
+                {
+                    _offsetDict.TryGetValue(topicPartition, out TopicPartitionOffset maxOffset); //取出最大的offset提交，可能并发当前的不是最大的
+                    With.NoException(_logger, () =>
+                    {
+                        this._consumer.Commit(new[] { maxOffset });
+                    }, "手动提交偏移量");
+                }
+            }
         }
 
         private async Task Handler(ConsumeResult<TKey, TValue> consumeResult)
         {
             if (OnMessage != null)
             {
-                await OnMessage(consumeResult);
+                await With.NoException(_logger, async () =>
+                {
+                    await OnMessage(consumeResult);
+                }, "kafka消费失败");
+            }
+            else
+            {
+                _logger.LogWarning("kafka没有注册消费事件");
             }
         }
         private void AddToOffsetDict(TopicPartition topicPartition, TopicPartitionOffset TopicPartitionOffset)
@@ -139,11 +180,27 @@ namespace Aix.MessageBus.Kafka.Impl
             });
         }
 
+        /// <summary>
+        /// 创建消费者对象
+        /// </summary>
+        /// <returns></returns>
         private IConsumer<TKey, TValue> CreateConsumer()
         {
-            if (_kafkaOptions.ConsumerConfig == null) throw new Exception("请配置ProducerConfig参数");
-            if (string.IsNullOrEmpty(_kafkaOptions.ConsumerConfig.BootstrapServers)) throw new Exception("请配置ConsumerConfig.BootstrapServers参数");
-            if (string.IsNullOrEmpty(_kafkaOptions.ConsumerConfig.GroupId)) throw new Exception("请配置ConsumerConfig.GroupId参数");
+            if (_kafkaOptions.ConsumerConfig == null) _kafkaOptions.ConsumerConfig = new ConsumerConfig();
+
+            if (string.IsNullOrEmpty(_kafkaOptions.ConsumerConfig.BootstrapServers))
+            {
+                _kafkaOptions.ConsumerConfig.BootstrapServers = _kafkaOptions.BootstrapServers;
+
+            }
+            if (string.IsNullOrEmpty(_kafkaOptions.ConsumerConfig.BootstrapServers))
+            {
+                throw new Exception("请配置BootstrapServers参数");
+            }
+            if (string.IsNullOrEmpty(_kafkaOptions.ConsumerConfig.GroupId))
+            {
+                _kafkaOptions.ConsumerConfig.GroupId = "kafka-messagebus-group";
+            }
 
             var consumer = new ConsumerBuilder<TKey, TValue>(_kafkaOptions.ConsumerConfig)
                   .SetErrorHandler((producer, error) =>
@@ -158,9 +215,13 @@ namespace Aix.MessageBus.Kafka.Impl
                       if (EnableAutoCommit() == false)
                       {
                           //只提交当前消费者分配的分区
-                          c.Commit(_offsetDict.Values.Where(x => partitions.Exists(current => current.Topic == x.Topic && current.Partition == x.Partition)));
-                          _logger.LogInformation("Kafka再均衡提交");
-                          _offsetDict.Clear();
+                          With.NoException(_logger, () =>
+                          {
+                              c.Commit(_offsetDict.Values.Where(x => partitions.Exists(current => current.Topic == x.Topic && current.Partition == x.Partition)));
+                              _logger.LogInformation("Kafka再均衡提交");
+                              _offsetDict.Clear();
+                          }, "Kafka再均衡提交");
+
                       }
                   })
                   .SetPartitionsAssignedHandler((c, partitions) =>

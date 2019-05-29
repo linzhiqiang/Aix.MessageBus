@@ -1,7 +1,9 @@
 ﻿using Aix.MessageBus;
 using Aix.MessageBus.Kafka;
+using Aix.MessageBus.Utils;
 using CommandLine;
 using Confluent.Kafka;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -22,8 +24,8 @@ namespace Sample
     /// </summary>
     public class CmdOptions
     {
-        [Option('m', "mode", Required = false, Default = "p", HelpText = "p=生产者测试，c=消费者测试,a=同时测试")]
-        public string Mode { get; set; }
+        [Option('m', "mode", Required = false, Default = 1, HelpText = "1=生产者测试，2=消费者测试,3=同时测试")]
+        public ClientMode Mode { get; set; }
 
         [Option('q', "quantity", Required = false, Default = 1, HelpText = "测试生产数量")]
         public int Count { get; set; }
@@ -43,8 +45,15 @@ namespace Sample
         {
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
             var host = new HostBuilder()
+                .ConfigureHostConfiguration(builder =>
+                {
+                    //https://www.cnblogs.com/subendong/p/8834902.html
+                    builder.AddEnvironmentVariables(prefix: "Demo_"); //配置环境变量 Demo_ENVIRONMENT Development/Staging/Production(默认值)
+                })
                 .ConfigureAppConfiguration((hostContext, config) =>
                 {
+                    config.AddJsonFile("appsettings.json", optional: true);
+                    config.AddJsonFile($"appsettings.{hostContext.HostingEnvironment.EnvironmentName}.json", optional: true);// 覆盖前面的相同内容
                 })
                 .ConfigureLogging((context, factory) =>
                 {
@@ -52,23 +61,35 @@ namespace Sample
                 })
                 .ConfigureServices((context, services) =>
                 {
+                    //var environment = Environment.GetEnvironmentVariable("Demo_ENVIRONMENT");
+                    //if (context.HostingEnvironment.IsEnvironment("Development"))
+                    if (context.HostingEnvironment.IsDevelopment()) //IsStaging(),IsProduction()
+                    {
 
-                    KafkaMessageBusMode mode = GetTestMode(options);
+                    }
 
                     services.AddSingleton(options);
-                    AddKafkaMessageBus(services, mode);
+                    var kafkaMessageBusOptions = context.Configuration.GetSection("kafka").Get<KafkaMessageBusOptions>();
+
+                   // var  test = ObjectUtils.Copy(kafkaMessageBusOptions.ConsumerConfig);
+
+                    kafkaMessageBusOptions.ClientMode = options.Mode;//这里方便测试，以命令行参数为准
+                    services.AddKafkaMessageBus(kafkaMessageBusOptions);
+
+                    //AddKafkaMessageBus(services, kafkaMessageBusOptions.ClientMode);
                     //AddInMemoryMessageBus(services);
 
-                    if ((mode & KafkaMessageBusMode.Consumer) > 0)
+                    if ((kafkaMessageBusOptions.ClientMode & ClientMode.Consumer) > 0)
                     {
                         services.AddHostedService<MessageBusConsumeService>();
                     }
-                    if ((mode & KafkaMessageBusMode.Producer) > 0)
+                    if ((kafkaMessageBusOptions.ClientMode & ClientMode.Producer) > 0)
                     {
                         services.AddHostedService<MessageBusProduerService>();
                     }
 
                 });
+
             Console.WriteLine($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}开始");
             host.RunConsoleAsync().Wait();
             Console.WriteLine("服务已退出");
@@ -85,33 +106,15 @@ namespace Sample
             }
         }
 
-        private static KafkaMessageBusMode GetTestMode(CmdOptions options)
-        {
-            KafkaMessageBusMode mode = 0;
-            if (options.Mode.ToLower() == "c")
-            {
-                mode = KafkaMessageBusMode.Consumer;
-            }
-            if (options.Mode.ToLower() == "p")
-            {
-                mode = KafkaMessageBusMode.Producer;
-            }
-            if (options.Mode.ToLower() == "a")
-            {
-                mode = KafkaMessageBusMode.Both;
-            }
 
-            return mode;
-        }
-
-        private static void AddKafkaMessageBus(IServiceCollection services, KafkaMessageBusMode mode)
+        private static void AddKafkaMessageBus(IServiceCollection services, ClientMode mode)
         {
             var bootstrapServers = "192.168.111.132:9092,192.168.111.132:9093,192.168.111.132:9094";// com 虚拟机
-           // bootstrapServers = "192.168.72.132:9092,192.168.72.132:9093,192.168.72.132:9094";//home 虚拟机
+                                                                                                    // bootstrapServers = "192.168.72.132:9092,192.168.72.132:9093,192.168.72.132:9094";//home 虚拟机
 
             var options = new KafkaMessageBusOptions
             {
-                KafkaMessageBusMode = mode,
+                ClientMode = mode,
                 TopicPrefix = "Kafka1", //项目名称
                 TopicMode = TopicMode.multiple,
                 Serializer = new MessagePackSerializer(), //默认也是该值
@@ -128,7 +131,7 @@ namespace Sample
                     GroupId = "kafka-messagebus",
                     BootstrapServers = bootstrapServers,
                     AutoOffsetReset = AutoOffsetReset.Earliest,
-                   // EnableAutoCommit = false,
+                    // EnableAutoCommit = false,
                     AutoCommitIntervalMs = 5000, //自动提交偏移量间隔 ，每5秒同步一次,当再均衡时，如果有消费者一直没有poll，会等到所有的消费者都poll之后才再均衡处理
                     CancellationDelayMaxMs = 1000 //poll等待时间，如果自己 consumer.Consume(TimeSpan.FromSeconds(1));写的时间就不用这个配置了
 

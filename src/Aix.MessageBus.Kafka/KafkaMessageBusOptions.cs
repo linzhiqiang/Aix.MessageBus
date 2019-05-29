@@ -6,7 +6,7 @@ using System.Text;
 namespace Aix.MessageBus.Kafka
 {
     [Flags]
-    public enum KafkaMessageBusMode
+    public enum ClientMode
     {
         Producer = 1,
         Consumer = 2,
@@ -30,8 +30,9 @@ namespace Aix.MessageBus.Kafka
     {
         public KafkaMessageBusOptions()
         {
-            this.TopicPrefix = "kafka";
-            this.KafkaMessageBusMode = KafkaMessageBusMode.Producer;
+           // this.TopicPrefix = "kafka-";
+            this.Topic = "messagebus";
+            this.ClientMode = ClientMode.Producer;
             this.Serializer = new MessagePackSerializer();
             this.ConsumerThreadCount = 4;
             this.TopicMode = TopicMode.multiple;
@@ -42,15 +43,22 @@ namespace Aix.MessageBus.Kafka
 
         public ConsumerConfig ConsumerConfig { get; set; }
 
+        public string BootstrapServers { get; set; }
+
         /// <summary>
         /// topic前缀，为了防止重复，建议用项目名称
         /// </summary>
         public string TopicPrefix { get; set; }
 
         /// <summary>
+        /// 针对单topic模式可以指定topic
+        /// </summary>
+        public string Topic { get; set; }
+
+        /// <summary>
         /// 客户端模式，是生产者还是消费者
         /// </summary>
-        public KafkaMessageBusMode KafkaMessageBusMode { get; set; }
+        public ClientMode ClientMode { get; set; }
 
         /// <summary>
         /// 自定义序列化，默认为MessagePack

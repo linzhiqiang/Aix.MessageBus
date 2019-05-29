@@ -49,11 +49,11 @@ namespace Aix.MessageBus.Kafka
             }
             _cancellationToken = cancellationToken;
 
-            if ((_kafkaOptions.KafkaMessageBusMode & KafkaMessageBusMode.Producer) == KafkaMessageBusMode.Producer)
+            if ((_kafkaOptions.ClientMode & ClientMode.Producer) == ClientMode.Producer)
             {
                 this._producer = new KafkaProducer<Null, MessageBusData>(this._serviceProvider);
             }
-            if ((_kafkaOptions.KafkaMessageBusMode & KafkaMessageBusMode.Consumer) == KafkaMessageBusMode.Consumer)
+            if ((_kafkaOptions.ClientMode & ClientMode.Consumer) == ClientMode.Consumer)
             {
                 //消费者连接订阅时再创建
                 foreach (var type in _subscriberTypeSet)
@@ -115,7 +115,6 @@ namespace Aix.MessageBus.Kafka
             _logger.LogInformation("KafkaMessageBus 释放...");
             With.NoException(_logger, () => { _producer?.Dispose(); }, "关闭生产者");
 
-            _logger.LogInformation("KafkaMessageBus 关闭消费者");
             foreach (var item in _consumerList)
             {
                 item.Close();
@@ -148,9 +147,6 @@ namespace Aix.MessageBus.Kafka
             if (!hasHandler || list == null) return;
             foreach (var item in list)
             {
-                if (this._cancellationToken.IsCancellationRequested)
-                    continue;
-
                 if (this._cancellationToken.IsCancellationRequested) return;
                 await With.NoException(_logger, async () =>
                 {
@@ -161,20 +157,21 @@ namespace Aix.MessageBus.Kafka
 
         private string GetHandlerKey(Type type)
         {
-            return type.FullName;
+            //return type.FullName;
+            return String.Concat(type.FullName, ", ", type.Assembly.GetName().Name);
         }
 
         private string GetTopic(Type type)
         {
             if (this._kafkaOptions.TopicMode == TopicMode.Single)
             {
-                return GetTopic("MessageBus");
+                return GetTopic(this._kafkaOptions.Topic);
             }
             return GetTopic(type.Name);
         }
         private string GetTopic(string name)
         {
-            return $"{_kafkaOptions.TopicPrefix}-{name}";
+            return $"{_kafkaOptions.TopicPrefix ?? ""}{name}";
         }
 
         #endregion
