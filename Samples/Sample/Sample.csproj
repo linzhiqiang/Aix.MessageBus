@@ -14,8 +14,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Aix.MessageBus.Kafka\Aix.MessageBus.Kafka.csproj" />
-    <ProjectReference Include="..\..\Aix.MessageBus\Aix.MessageBus.csproj" />
+    <ProjectReference Include="..\..\src\Aix.MessageBus.Kafka\Aix.MessageBus.Kafka.csproj" />
+    <ProjectReference Include="..\..\src\Aix.MessageBus\Aix.MessageBus.csproj" />
   </ItemGroup>
 
   <ItemGroup>
