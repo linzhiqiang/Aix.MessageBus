@@ -13,9 +13,9 @@ using System.Threading.Tasks;
 namespace Sample
 {
     /*
-    dotnet run -m p -q 100  //生产者测试
-    dotnet run -m c  //消费者测试
-    dotnet run -m a -q 100 //生产者消费者一起测试
+    dotnet run -m 1 -q 100  //生产者测试
+    dotnet run -m 2  //消费者测试
+    dotnet run -m 3 -q 100 //生产者消费者一起测试
      */
 
 
