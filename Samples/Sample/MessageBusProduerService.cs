@@ -43,14 +43,21 @@ namespace Sample
             var duration = Stopwatch.StartNew();
 
             int producerCount = _cmdOptions.Count > 0 ? _cmdOptions.Count : 1;
-            for (int i = 0; i < producerCount; i++)
+            try
             {
-                if (cancellationToken.IsCancellationRequested) break;
+                for (int i = 0; i < producerCount; i++)
+                {
+                    if (cancellationToken.IsCancellationRequested) break;
 
-                var messageData = new KafkaMessage { MessageId = i.ToString(), Content = $"我是内容_{i}", CreateTime = DateTime.Now };
-                await _messageBus.PublishAsync(messageData);
-                 _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}生产数据：MessageId={messageData.MessageId}");
-                //await Task.Delay(TimeSpan.FromSeconds(1));
+                    var messageData = new KafkaMessage { MessageId = i.ToString(), Content = $"我是内容_{i}", CreateTime = DateTime.Now };
+                    await _messageBus.PublishAsync(messageData);
+                    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}生产数据：MessageId={messageData.MessageId}");
+                    //await Task.Delay(TimeSpan.FromSeconds(1));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex,"");
             }
 
             duration.Stop();

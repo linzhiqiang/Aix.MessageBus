@@ -1,2 +1,2 @@
 #!/usr/bin/bash
-dotnet Sample.dll -m p -q 100
+dotnet Sample.dll -m 1 -q 100
