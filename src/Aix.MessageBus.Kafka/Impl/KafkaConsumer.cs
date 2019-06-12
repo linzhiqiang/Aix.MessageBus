@@ -213,7 +213,7 @@ namespace Aix.MessageBus.Kafka.Impl
                       }
                       else
                       {
-                          _logger.LogInformation(errorInfo);
+                          _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}Kafka消费者error信息：{errorInfo}");
                       }
                   })
                   .SetPartitionsRevokedHandler((c, partitions) =>
