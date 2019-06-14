@@ -205,16 +205,16 @@ namespace Aix.MessageBus.Kafka.Impl
             var consumer = new ConsumerBuilder<TKey, TValue>(_kafkaOptions.ConsumerConfig)
                   .SetErrorHandler((producer, error) =>
                   {
-                      string errorInfo = $"Code:{error.Code}, Reason:{error.Reason}, IsFatal={error.IsFatal}, IsLocalError:{error.IsLocalError}, IsBrokerError:{error.IsBrokerError}";
+                      
                       if (error.IsFatal || error.IsBrokerError)
                       {
-                          //Local_Transport-127.0.0.1:9201/10089: Disconnected (after 1778127ms in state UP), IsFatal=False, IsLocalError:True, IsBrokerError:False
+                          string errorInfo = $"Code:{error.Code}, Reason:{error.Reason}, IsFatal={error.IsFatal}, IsLocalError:{error.IsLocalError}, IsBrokerError:{error.IsBrokerError}";
                           _logger.LogError($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}Kafka消费者出错：{errorInfo}");
                       }
-                      else
-                      {
-                          _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}Kafka消费者error信息：{errorInfo}");
-                      }
+                      //else
+                      //{
+                      //    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}Kafka消费者error信息：{errorInfo}");
+                      //}
                   })
                   .SetPartitionsRevokedHandler((c, partitions) =>
                   {
