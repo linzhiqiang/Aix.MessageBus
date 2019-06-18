@@ -1,0 +1,27 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <Version>1.0.4</Version>
+    <Description>
+    MessageBus的kafka实现
+    支持手工提交offset模式
+    支持单topic和多topic模式(所有类型消息存储在单个topic或者多个topic)
+</Description>
+    <Authors>linzhiqiang</Authors>
+    <Product>linzhiqiang</Product>
+    <PackageProjectUrl>https://github.com/linzhiqiang/Aix.MessageBus.git</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/linzhiqiang/Aix.MessageBus.git</RepositoryUrl>
+    <PackageReleaseNotes>升级Confluent.Kafka版本至v1.0.1.1</PackageReleaseNotes>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Confluent.Kafka" Version="1.0.1.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Aix.MessageBus\Aix.MessageBus.csproj" />
+  </ItemGroup>
+
+</Project>
