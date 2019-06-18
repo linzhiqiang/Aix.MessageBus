@@ -1,2 +1,0 @@
-#!/usr/bin/bash
-dotnet Sample.dll -m 2
