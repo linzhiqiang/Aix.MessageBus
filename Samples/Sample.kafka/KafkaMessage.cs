@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Sample
+namespace Sample.kafka
 {
     public class KafkaMessage
     {

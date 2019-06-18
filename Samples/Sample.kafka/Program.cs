@@ -1,5 +1,6 @@
 ﻿using Aix.MessageBus;
 using Aix.MessageBus.Kafka;
+using Aix.MessageBus.Redis;
 using Aix.MessageBus.Utils;
 using CommandLine;
 using Confluent.Kafka;
@@ -13,7 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Sample
+namespace Sample.kafka
 {
     /*
     dotnet run -m 1 -q 100  //生产者测试
@@ -61,11 +62,14 @@ namespace Sample
                     services.AddSingleton(options);
                     var kafkaMessageBusOptions = context.Configuration.GetSection("kafka").Get<KafkaMessageBusOptions>();
 
-                    // var  test = ObjectUtils.Copy(kafkaMessageBusOptions.ConsumerConfig);
-
                     kafkaMessageBusOptions.ClientMode = options.Mode;//这里方便测试，以命令行参数为准
 
                     services.AddKafkaMessageBus(kafkaMessageBusOptions);
+
+                    //RedisMessageBusOptions redisMessageBusOptions = new RedisMessageBusOptions {
+                    //     RedisConnectionString = "10.240.225.136"
+                    //};
+                    //services.AddRedisMessageBus(redisMessageBusOptions);
 
                     if ((kafkaMessageBusOptions.ClientMode & ClientMode.Consumer) > 0)
                     {

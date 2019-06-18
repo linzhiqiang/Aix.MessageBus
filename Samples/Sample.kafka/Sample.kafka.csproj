@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Aix.MessageBus.Kafka\Aix.MessageBus.Kafka.csproj" />
+    <ProjectReference Include="..\..\src\Aix.MessageBus.Redis\Aix.MessageBus.Redis.csproj" />
     <ProjectReference Include="..\..\src\Aix.MessageBus\Aix.MessageBus.csproj" />
   </ItemGroup>
 

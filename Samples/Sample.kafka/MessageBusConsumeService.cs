@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Sample
+namespace Sample.kafka
 {
     public class MessageBusConsumeService : IHostedService
     {
@@ -54,6 +54,7 @@ namespace Sample
                 {
                     var current = Interlocked.Increment(ref Count);
                     _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费1数据：MessageId={message.MessageId},Content={message.Content},count={current}");
+
                     await Task.CompletedTask;
 
                 }, context, cancellationToken);
