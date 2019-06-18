@@ -67,7 +67,7 @@ namespace Sample.kafka
                     services.AddKafkaMessageBus(kafkaMessageBusOptions);
 
                     //RedisMessageBusOptions redisMessageBusOptions = new RedisMessageBusOptions {
-                    //     RedisConnectionString = "10.240.225.136"
+                    //     RedisConnectionString = "192.168.111.132:6379"
                     //};
                     //services.AddRedisMessageBus(redisMessageBusOptions);
 
