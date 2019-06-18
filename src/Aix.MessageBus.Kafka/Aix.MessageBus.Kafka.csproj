@@ -3,7 +3,7 @@
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <Version>1.0.2</Version>
+    <Version>1.0.5</Version>
     <Description>
       MessageBus的kafka实现
      支持手工提交offset模式
@@ -12,7 +12,7 @@
     <Product>linzhiqiang</Product>
     <PackageProjectUrl>https://github.com/linzhiqiang/Aix.MessageBus.git</PackageProjectUrl>
     <RepositoryUrl>https://github.com/linzhiqiang/Aix.MessageBus.git</RepositoryUrl>
-    <PackageReleaseNotes>Confluent.Kafka更新1.0.0版本</PackageReleaseNotes>
+    <PackageReleaseNotes></PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
