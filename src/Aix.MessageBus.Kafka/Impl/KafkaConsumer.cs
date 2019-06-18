@@ -41,17 +41,15 @@ namespace Aix.MessageBus.Kafka.Impl
             _kafkaOptions = serviceProvider.GetService<KafkaMessageBusOptions>();
         }
 
-        public Task Subscribe(string topic, CancellationToken cancellationToken)
+        public Task Subscribe(string topic, string groupId, CancellationToken cancellationToken)
         {
-            Task.Run(async () =>
+           return Task.Run(async () =>
             {
                 _isStart = true;
-                this._consumer = this.CreateConsumer();
+                this._consumer = this.CreateConsumer(groupId);
                 this._consumer.Subscribe(topic);
                 await StartPoll(cancellationToken);
             });
-
-            return Task.CompletedTask;
         }
 
         public void Close()
@@ -184,7 +182,7 @@ namespace Aix.MessageBus.Kafka.Impl
         /// 创建消费者对象
         /// </summary>
         /// <returns></returns>
-        private IConsumer<TKey, TValue> CreateConsumer()
+        private IConsumer<TKey, TValue> CreateConsumer(string groupId)
         {
             if (_kafkaOptions.ConsumerConfig == null) _kafkaOptions.ConsumerConfig = new ConsumerConfig();
 
@@ -197,51 +195,49 @@ namespace Aix.MessageBus.Kafka.Impl
             {
                 throw new Exception("请配置BootstrapServers参数");
             }
-            if (string.IsNullOrEmpty(_kafkaOptions.ConsumerConfig.GroupId))
+
+            var config = _kafkaOptions.ConsumerConfig.ToDictionary(x => x.Key, v => v.Value);
+            if (!string.IsNullOrEmpty(groupId))
             {
-                _kafkaOptions.ConsumerConfig.GroupId = "kafka-messagebus-group";
+                config["group.id"] = groupId;
+                //config.AddOrUpdate("group.id", groupId);
             }
 
-            var consumer = new ConsumerBuilder<TKey, TValue>(_kafkaOptions.ConsumerConfig)
-                  .SetErrorHandler((producer, error) =>
-                  {
-                      
-                      if (error.IsFatal || error.IsBrokerError)
-                      {
-                          string errorInfo = $"Code:{error.Code}, Reason:{error.Reason}, IsFatal={error.IsFatal}, IsLocalError:{error.IsLocalError}, IsBrokerError:{error.IsBrokerError}";
-                          _logger.LogError($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}Kafka消费者出错：{errorInfo}");
-                      }
-                      //else
-                      //{
-                      //    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}Kafka消费者error信息：{errorInfo}");
-                      //}
-                  })
-                  .SetPartitionsRevokedHandler((c, partitions) =>
-                  {
-                      //方法会在再均衡开始之前和消费者停止读取消息之后被调用。如果在这里提交偏移量，下一个接管partition的消费者就知道该从哪里开始读取了。
-                      //Console.WriteLine($"Revoking assignment: [{string.Join(", ", partitions)}]");
-                      if (EnableAutoCommit() == false)
-                      {
-                          //只提交当前消费者分配的分区
-                          With.NoException(_logger, () =>
-                          {
-                              c.Commit(_offsetDict.Values.Where(x => partitions.Exists(current => current.Topic == x.Topic && current.Partition == x.Partition)));
-                              _logger.LogInformation("Kafka再均衡提交");
-                              _offsetDict.Clear();
-                          }, "Kafka再均衡提交");
+            var consumer = new ConsumerBuilder<TKey, TValue>(config)
+                 .SetErrorHandler((producer, error) =>
+                 {
+                     if (error.IsFatal || error.IsBrokerError)
+                     {
+                         string errorInfo = $"Code:{error.Code}, Reason:{error.Reason}, IsFatal={error.IsFatal}, IsLocalError:{error.IsLocalError}, IsBrokerError:{error.IsBrokerError}";
+                         _logger.LogError($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}Kafka消费者出错：{errorInfo}");
+                     }
+                 })
+                 .SetPartitionsRevokedHandler((c, partitions) =>
+                 {
+                     //方法会在再均衡开始之前和消费者停止读取消息之后被调用。如果在这里提交偏移量，下一个接管partition的消费者就知道该从哪里开始读取了。
+                     //Console.WriteLine($"Revoking assignment: [{string.Join(", ", partitions)}]");
+                     if (EnableAutoCommit() == false)
+                     {
+                         //只提交当前消费者分配的分区
+                         With.NoException(_logger, () =>
+                        {
+                            c.Commit(_offsetDict.Values.Where(x => partitions.Exists(current => current.Topic == x.Topic && current.Partition == x.Partition)));
+                            _logger.LogInformation("Kafka再均衡提交");
+                            _offsetDict.Clear();
+                        }, "Kafka再均衡提交");
 
-                      }
-                  })
-                  .SetPartitionsAssignedHandler((c, partitions) =>
-                  {
-                      if (EnableAutoCommit() == false)
-                      {
-                          _offsetDict.Clear();
-                      }
-                      _logger.LogInformation($"MemberId:{c.MemberId}分配的分区：Assigned partitions: [{string.Join(", ", partitions)}]");
-                  })
-                .SetValueDeserializer(new ConfluentKafkaSerializerAdapter<TValue>(_kafkaOptions.Serializer))
-                .Build();
+                     }
+                 })
+                 .SetPartitionsAssignedHandler((c, partitions) =>
+                 {
+                     if (EnableAutoCommit() == false)
+                     {
+                         _offsetDict.Clear();
+                     }
+                     _logger.LogInformation($"MemberId:{c.MemberId}分配的分区：Assigned partitions: [{string.Join(", ", partitions)}]");
+                 })
+               .SetValueDeserializer(new ConfluentKafkaSerializerAdapter<TValue>(_kafkaOptions.Serializer))
+               .Build();
 
             return consumer;
         }
@@ -255,6 +251,7 @@ namespace Aix.MessageBus.Kafka.Impl
             var enableAutoCommit = this._kafkaOptions.ConsumerConfig.EnableAutoCommit;
             return !enableAutoCommit.HasValue || enableAutoCommit.Value == true;
         }
+
 
         #endregion
     }

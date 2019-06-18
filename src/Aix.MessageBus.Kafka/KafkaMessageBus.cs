@@ -3,17 +3,12 @@ using Aix.MessageBus.Utils;
 using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
 namespace Aix.MessageBus.Kafka
 {
-    /// <summary>
-    /// kafka版MessageBus，每个类型创建一个topic, 支持手工提交offset
-    /// </summary>
     public class KafkaMessageBus : IMessageBus
     {
         #region 属性 构造
@@ -22,50 +17,22 @@ namespace Aix.MessageBus.Kafka
         private KafkaMessageBusOptions _kafkaOptions;
         IKafkaProducer<Null, MessageBusData> _producer = null;
         List<IKafkaConsumer<Null, MessageBusData>> _consumerList = new List<IKafkaConsumer<Null, MessageBusData>>();
+        private CancellationToken _cancellationToken = default;
 
-        ConcurrentDictionary<string, List<SubscriberInfo>> _subscriberDict = new ConcurrentDictionary<string, List<SubscriberInfo>>();
-        HashSet<Type> _subscriberTypeSet = new HashSet<Type>();
+        private HashSet<string> Subscribers = new HashSet<string>();
 
-        private CancellationToken _cancellationToken = default(CancellationToken);
-        private volatile bool _isStart = false;
+        #endregion
 
         public KafkaMessageBus(IServiceProvider serviceProvider, ILogger<KafkaMessageBus> logger, KafkaMessageBusOptions kafkaOptions)
         {
             _serviceProvider = serviceProvider;
             _logger = logger;
             _kafkaOptions = kafkaOptions;
-        }
-
-        #endregion
-
-        public async Task StartAsync(CancellationToken cancellationToken)
-        {
-            if (_isStart) return;
-
-            lock (this)
-            {
-                if (_isStart) return;
-                _isStart = true;
-            }
-            _cancellationToken = cancellationToken;
 
             if ((_kafkaOptions.ClientMode & ClientMode.Producer) == ClientMode.Producer)
             {
                 this._producer = new KafkaProducer<Null, MessageBusData>(this._serviceProvider);
             }
-            if ((_kafkaOptions.ClientMode & ClientMode.Consumer) == ClientMode.Consumer)
-            {
-                //消费者连接订阅时再创建
-                foreach (var type in _subscriberTypeSet)
-                {
-                    await SubscribeKafka(type, cancellationToken);
-                    if (this._kafkaOptions.TopicMode == TopicMode.Single) //如果是单topic只注册一个就行了，所有类型用一个topic存储
-                    {
-                        break;
-                    }
-                }
-            }
-
         }
 
         public async Task PublishAsync(Type messageType, object message)
@@ -74,40 +41,35 @@ namespace Aix.MessageBus.Kafka
             await _producer.ProduceAsync(GetTopic(messageType), new Message<Null, MessageBusData> { Value = data });
         }
 
-        public Task SubscribeAsync<T>(Func<T, Task> handler)
+        public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext messageBusContext, CancellationToken cancellationToken)
         {
-            string handlerKey = GetHandlerKey(typeof(T)); //handler缓存key
-            var subscriber = new SubscriberInfo
-            {
-                Type = typeof(T),
-                Action = (message) =>
-                {
-                    var realObj = _kafkaOptions.Serializer.Deserialize<T>(message);
-                    return handler(realObj);
-                }
-            };
+            string topic = GetTopic(typeof(T));
+            var groupId = messageBusContext.Config.GetValue("group.id", "groupid");
+            var threadCountStr = messageBusContext.Config.GetValue("consumer.thread.count", "ConsumerThreadCount");
+            var threadCount = !string.IsNullOrEmpty(threadCountStr) ? int.Parse(threadCountStr) : _kafkaOptions.ConsumerThreadCount;
+            AssertUtils.IsTrue(threadCount > 0, "消费者线程数必须大于0");
 
-            bool hasSubscribeType = false; //该类型是否已订阅过kafka
-            lock (typeof(T))
-            {
-                if (_subscriberDict.ContainsKey(handlerKey))
-                {
-                    hasSubscribeType = true;
-                    _subscriberDict[handlerKey].Add(subscriber);
-                }
-                else
-                {
-                    _subscriberDict.TryAdd(handlerKey, new List<SubscriberInfo> { subscriber });
+            var key = $"{topic}_{groupId}";
+            AssertUtils.IsTrue(!Subscribers.Contains(key), "重复订阅");
+            Subscribers.Add(key);
 
-                }
+            _logger.LogInformation($"订阅[{topic}]：groupid:{groupId},threadcount={threadCount}");
+            for (int i = 0; i < threadCount; i++)
+            {
+                var consumer = new KafkaConsumer<Null, MessageBusData>(_serviceProvider);
+                consumer.OnMessage += consumeResult =>
+                {
+                    if (this._cancellationToken.IsCancellationRequested) return Task.CompletedTask;
+                    return With.NoException(_logger, async () =>
+                   {
+                       var obj = _kafkaOptions.Serializer.Deserialize<T>(consumeResult.Value.Data);
+                       await handler(obj);
+                   }, $"消费数据{consumeResult.Value.Type}");
+                };
+
+                _consumerList.Add(consumer);
+                await consumer.Subscribe(topic, groupId, cancellationToken);
             }
-            if (!hasSubscribeType) //没有订阅过kafka  kafka主题订阅一次就够了
-            {
-                _subscriberTypeSet.Add(typeof(T));
-                //await SubscribeKafka(typeof(T));
-            }
-
-            return Task.CompletedTask;
         }
 
         public void Dispose()
@@ -121,57 +83,16 @@ namespace Aix.MessageBus.Kafka
             }
         }
 
-        #region private 
-
-        private Task SubscribeKafka(Type type, CancellationToken cancellationToken)
-        {
-            Task.Run(async () =>
-            {
-                for (int i = 0; i < _kafkaOptions.ConsumerThreadCount; i++)
-                {
-                    var consumer = new KafkaConsumer<Null, MessageBusData>(_serviceProvider);
-                    consumer.OnMessage += Handler;
-                    _consumerList.Add(consumer);
-                    await consumer.Subscribe(GetTopic(type), cancellationToken);
-                }
-            }, cancellationToken);
-
-            return Task.CompletedTask;
-        }
-
-
-        private async Task Handler(ConsumeResult<Null, MessageBusData> consumeResult)
-        {
-            string handlerKey = consumeResult.Value.Type;
-            var hasHandler = _subscriberDict.TryGetValue(handlerKey, out List<SubscriberInfo> list);
-            if (!hasHandler || list == null) return;
-            foreach (var item in list)
-            {
-                if (this._cancellationToken.IsCancellationRequested) return;
-                await With.NoException(_logger, async () =>
-                {
-                    await item.Action(consumeResult.Value.Data);
-                }, $"消费数据{consumeResult.Value.Type}");
-            }
-        }
+        #region private
 
         private string GetHandlerKey(Type type)
         {
-            //return type.FullName;
             return String.Concat(type.FullName, ", ", type.Assembly.GetName().Name);
         }
 
         private string GetTopic(Type type)
         {
-            if (this._kafkaOptions.TopicMode == TopicMode.Single)
-            {
-                return GetTopic(this._kafkaOptions.Topic);
-            }
-            return GetTopic(type.Name);
-        }
-        private string GetTopic(string name)
-        {
-            return $"{_kafkaOptions.TopicPrefix ?? ""}{name}";
+            return $"{_kafkaOptions.TopicPrefix ?? ""}{type.Name}";
         }
 
         #endregion

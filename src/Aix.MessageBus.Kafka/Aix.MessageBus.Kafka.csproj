@@ -4,9 +4,10 @@
     <TargetFramework>netstandard2.0</TargetFramework>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <Version>1.0.2</Version>
-    <Description>MessageBus的kafka实现
-支持手工提交offset模式
-支持单topic和多topic模式(所有类型消息存储在单个topic或者多个topic)</Description>
+    <Description>
+      MessageBus的kafka实现
+     支持手工提交offset模式
+  </Description>
     <Authors>linzhiqiang</Authors>
     <Product>linzhiqiang</Product>
     <PackageProjectUrl>https://github.com/linzhiqiang/Aix.MessageBus.git</PackageProjectUrl>

@@ -11,9 +11,6 @@ namespace Aix.MessageBus
 
     public class InMemoryMessageBusOptions
     {
-        public InMemoryMessageBusOptions()
-        {
-        }
     }
 
     public class InMemoryMessageBus : IMessageBus
@@ -52,7 +49,7 @@ namespace Aix.MessageBus
             return Task.CompletedTask;
         }
 
-        public Task SubscribeAsync<T>(Func<T, Task> handler)
+        public Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context, CancellationToken cancellationToken)
         {
             string handlerKey = GetHandlerKey(typeof(T));
             var subscriber = new InMemorySubscriberInfo

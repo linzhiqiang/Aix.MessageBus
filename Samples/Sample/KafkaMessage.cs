@@ -11,4 +11,12 @@ namespace Sample
 
         public DateTime CreateTime { get; set; }
     }
+
+    public class KafkaMessage2
+    {
+        public string MessageId { get; set; }
+        public string Content { get; set; }
+
+        public DateTime CreateTime { get; set; }
+    }
 }

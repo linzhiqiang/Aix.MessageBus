@@ -24,11 +24,10 @@ namespace Sample
 
         public Task StartAsync(CancellationToken cancellationToken)
         {
-            Task.Run(async () =>
-            {
-                await this._messageBus.StartAsync(cancellationToken);
-                return Producer(cancellationToken);
-            });
+            Task.Run(() =>
+           {
+               return Producer(cancellationToken);
+           });
 
             return Task.CompletedTask;
         }
@@ -40,8 +39,6 @@ namespace Sample
 
         private async Task Producer(CancellationToken cancellationToken)
         {
-            var duration = Stopwatch.StartNew();
-
             int producerCount = _cmdOptions.Count > 0 ? _cmdOptions.Count : 1;
             try
             {
@@ -57,12 +54,8 @@ namespace Sample
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex,"");
+                _logger.LogError(ex, "");
             }
-
-            duration.Stop();
-            var totalSecond = duration.ElapsedMilliseconds / 1000;//执行任务的时间
-            _logger.LogInformation($"生产效率={producerCount * 1.0 / totalSecond}");
         }
     }
 }

@@ -6,7 +6,6 @@ namespace Aix.MessageBus
 {
    public class MessageBusData
     {
-
         public string Type { get; set; }
         public byte[] Data { get; set; }
     }

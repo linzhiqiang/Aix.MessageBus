@@ -9,7 +9,7 @@ namespace Aix.MessageBus.Kafka
 {
     internal interface IKafkaConsumer<TKey, TValue> : IDisposable
     {
-        Task Subscribe(string topic, CancellationToken cancellationToken);
+        Task Subscribe(string topic, string groupId, CancellationToken cancellationToken);
 
         event Func<ConsumeResult<TKey, TValue>, Task> OnMessage;
         void Close();

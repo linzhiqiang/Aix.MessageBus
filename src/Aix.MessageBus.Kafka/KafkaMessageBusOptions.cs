@@ -13,29 +13,14 @@ namespace Aix.MessageBus.Kafka
         Both = 3
     }
 
-    public enum TopicMode
-    {
-        /// <summary>
-        /// 多个topic 每种类型对应一个topic ，默认为多topic
-        /// </summary>
-        multiple = 0,
-
-        /// <summary>
-        /// 所有类型对应一个topic
-        /// </summary>
-        Single = 1
-    }
-
     public class KafkaMessageBusOptions
     {
         public KafkaMessageBusOptions()
         {
            // this.TopicPrefix = "kafka-";
-            this.Topic = "messagebus";
             this.ClientMode = ClientMode.Producer;
             this.Serializer = new MessagePackSerializer();
             this.ConsumerThreadCount = 4;
-            this.TopicMode = TopicMode.multiple;
             this.ManualCommitBatch = 10;
         }
 
@@ -51,11 +36,6 @@ namespace Aix.MessageBus.Kafka
         public string TopicPrefix { get; set; }
 
         /// <summary>
-        /// 针对单topic模式可以指定topic
-        /// </summary>
-        public string Topic { get; set; }
-
-        /// <summary>
         /// 客户端模式，是生产者还是消费者
         /// </summary>
         public ClientMode ClientMode { get; set; }
@@ -66,14 +46,9 @@ namespace Aix.MessageBus.Kafka
         public ISerializer Serializer { get; set; }
 
         /// <summary>
-        /// 每个类型的消费线程数 默认4个
+        /// 默认每个类型的消费线程数 默认4个
         /// </summary>
         public int ConsumerThreadCount { get; set; }
-
-        /// <summary>
-        /// 不同类型消息是单个topic 还是多topic,默认值是多topic
-        /// </summary>
-        public TopicMode TopicMode { get; set; }
 
         /// <summary>
         /// EnableAutoCommit=false时每多少个消息提交一次 默认10条消息提交一次

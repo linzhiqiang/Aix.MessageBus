@@ -1,4 +1,5 @@
 ﻿using Aix.MessageBus;
+using Aix.MessageBus.Kafka;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -31,14 +32,8 @@ namespace Sample
                 //taskList.Add(Test(cancellationToken));
 
                 await Task.WhenAll(taskList.ToArray());
-
-                await this._messageBus.StartAsync(cancellationToken);
             });
 
-            //Task.Run(async()=> {
-            //    await Task.Delay(20*1000);
-            //    _messageBus.Dispose();
-            //});
             return Task.CompletedTask;
         }
 
@@ -49,26 +44,37 @@ namespace Sample
 
         private async Task Subscribe(CancellationToken cancellationToken)
         {
-            Stopwatch duration = null;
-            await _messageBus.SubscribeAsync<KafkaMessage>(async (message) =>
+            try
             {
-                if (Count == 0)
+                //订阅
+                MessageBusContext context = new MessageBusContext();
+                context.Config.Add("GroupId", "kafkaMessageGroup1"); //消费者组
+                context.Config.Add("ConsumerThreadCount", "2");//该订阅的消费线程数，注意和分区数匹配
+                await _messageBus.SubscribeAsync<KafkaMessage>(async (message) =>
                 {
-                    duration = Stopwatch.StartNew();
-                }
-                var current = Interlocked.Increment(ref Count);
-                _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费数据：MessageId={message.MessageId},Content={message.Content},count={current}");
+                    var current = Interlocked.Increment(ref Count);
+                    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费1数据：MessageId={message.MessageId},Content={message.Content},count={current}");
+                    await Task.CompletedTask;
 
-                await Task.CompletedTask;
+                }, context, cancellationToken);
 
-                if (current % 10000==0)
+
+                //订阅
+                MessageBusContext context2 = new MessageBusContext();
+                context2.Config.Add("GroupId", "kafkaMessageGroup2");//消费者组
+                context2.Config.Add("ConsumerThreadCount", "2");//该订阅的消费线程数，注意和分区数匹配
+
+                await _messageBus.SubscribeAsync<KafkaMessage>(async (message) =>
                 {
-                    duration.Stop();
-                    var totalMilliseconds = duration.ElapsedMilliseconds;//执行任务的时间
-                    _logger.LogInformation($"ElapsedMilliseconds={duration.ElapsedMilliseconds}");
-                    _logger.LogInformation($"消费效率={current * 1.0 / totalMilliseconds}");
-                }
-            });
+                    var current = Interlocked.Increment(ref Count);
+                    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费2数据：MessageId={message.MessageId},Content={message.Content},count={current}");
+                    await Task.CompletedTask;
+                }, context2, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "");
+            }
         }
     }
 }
