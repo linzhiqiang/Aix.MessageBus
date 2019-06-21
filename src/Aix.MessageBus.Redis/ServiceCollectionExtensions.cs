@@ -27,8 +27,8 @@ namespace Aix.MessageBus.Redis
             }
 
             services
-               .AddSingleton<RedisMessageBusOptions>(options)
-               .AddSingleton<IMessageBus, RedisMessageBus>();
+               .AddSingleton(options)
+               .AddSingleton<IMessageBus, RedisMessageBus_Subscriber>();
 
             return services;
         }

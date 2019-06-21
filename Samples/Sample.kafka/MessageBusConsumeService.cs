@@ -55,6 +55,8 @@ namespace Sample.kafka
                     var current = Interlocked.Increment(ref Count);
                     _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费1数据：MessageId={message.MessageId},Content={message.Content},count={current}");
 
+                    await Task.Delay(TimeSpan.FromSeconds(20));
+
                     await Task.CompletedTask;
 
                 }, context, cancellationToken);
@@ -65,7 +67,7 @@ namespace Sample.kafka
                 context2.Config.Add("GroupId", "kafkaMessageGroup2");//消费者组
                 context2.Config.Add("ConsumerThreadCount", "2");//该订阅的消费线程数，注意和分区数匹配
 
-                await _messageBus.SubscribeAsync<KafkaMessage>(async (message) =>
+                await _messageBus.SubscribeAsync<KafkaMessage2>(async (message) =>
                 {
                     var current = Interlocked.Increment(ref Count);
                     _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费2数据：MessageId={message.MessageId},Content={message.Content},count={current}");
