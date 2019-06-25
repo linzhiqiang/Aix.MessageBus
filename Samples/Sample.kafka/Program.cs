@@ -62,20 +62,24 @@ namespace Sample.kafka
                     services.AddSingleton(options);
                     var kafkaMessageBusOptions = context.Configuration.GetSection("kafka").Get<KafkaMessageBusOptions>();
 
-                    kafkaMessageBusOptions.ClientMode = options.Mode;//这里方便测试，以命令行参数为准
+                   // kafkaMessageBusOptions.ClientMode = options.Mode;//这里方便测试，以命令行参数为准
 
-                    services.AddKafkaMessageBus(kafkaMessageBusOptions);
+                    //services.AddKafkaMessageBus(kafkaMessageBusOptions);
 
-                    //RedisMessageBusOptions redisMessageBusOptions = new RedisMessageBusOptions {
-                    //     RedisConnectionString = "192.168.111.132:6379"
+                    //RedisMessageBusOptions redisMessageBusOptions = new RedisMessageBusOptions
+                    //{
+                    //    ConnectionString = "192.168.111.132:6379",
+                    //     TopicPrefix="redis:",
+                    //      ConsumerThreadCount=4
                     //};
-                    //services.AddRedisMessageBus(redisMessageBusOptions);
+                   var  redisMessageBusOptions = context.Configuration.GetSection("redis-messagebus").Get<RedisMessageBusOptions>();
+                    services.AddRedisMessageBus(redisMessageBusOptions);
 
-                    if ((kafkaMessageBusOptions.ClientMode & ClientMode.Consumer) > 0)
+                    if ((options.Mode & ClientMode.Consumer) > 0)
                     {
                         services.AddHostedService<MessageBusConsumeService>();
                     }
-                    if ((kafkaMessageBusOptions.ClientMode & ClientMode.Producer) > 0)
+                    if ((options.Mode & ClientMode.Producer) > 0)
                     {
                         services.AddHostedService<MessageBusProduerService>();
                     }
@@ -105,10 +109,9 @@ namespace Sample.kafka
                                                                                                     // bootstrapServers = "192.168.72.132:9092,192.168.72.132:9093,192.168.72.132:9094";//home 虚拟机
             var options = new KafkaMessageBusOptions
             {
-                ClientMode = mode,
                 TopicPrefix = "kafka-", //项目名称
                 Serializer = new MessagePackSerializer(), //默认也是该值
-                ConsumerThreadCount = 4, //总部署线程数不要大于分区数
+                DefaultConsumerThreadCount = 4, //总部署线程数不要大于分区数
                 ManualCommitBatch = 100,
                 ProducerConfig = new ProducerConfig
                 {

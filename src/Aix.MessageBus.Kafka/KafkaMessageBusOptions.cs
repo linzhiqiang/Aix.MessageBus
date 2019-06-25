@@ -5,22 +5,13 @@ using System.Text;
 
 namespace Aix.MessageBus.Kafka
 {
-    [Flags]
-    public enum ClientMode
-    {
-        Producer = 1,
-        Consumer = 2,
-        Both = 3
-    }
-
     public class KafkaMessageBusOptions
     {
         public KafkaMessageBusOptions()
         {
-           // this.TopicPrefix = "kafka-";
-            this.ClientMode = ClientMode.Producer;
+            this.TopicPrefix = "kafka-";
             this.Serializer = new MessagePackSerializer();
-            this.ConsumerThreadCount = 4;
+            this.DefaultConsumerThreadCount = 4;
             this.ManualCommitBatch = 10;
         }
 
@@ -36,9 +27,9 @@ namespace Aix.MessageBus.Kafka
         public string TopicPrefix { get; set; }
 
         /// <summary>
-        /// 客户端模式，是生产者还是消费者
+        /// 默认的groupid
         /// </summary>
-        public ClientMode ClientMode { get; set; }
+        public string DefaultConsumerGroupId { get; set; }
 
         /// <summary>
         /// 自定义序列化，默认为MessagePack
@@ -48,7 +39,7 @@ namespace Aix.MessageBus.Kafka
         /// <summary>
         /// 默认每个类型的消费线程数 默认4个
         /// </summary>
-        public int ConsumerThreadCount { get; set; }
+        public int DefaultConsumerThreadCount { get; set; }
 
         /// <summary>
         /// EnableAutoCommit=false时每多少个消息提交一次 默认10条消息提交一次

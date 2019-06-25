@@ -9,11 +9,12 @@ namespace Aix.MessageBus
 
     public  class MessageBusContext
     {
+        public static MessageBusContext Default = new MessageBusContext();
 
         private IDictionary<string, string> _config;
 
         /// <summary>
-        /// 配置
+        /// 具体实现需要的个性配置 如kafka实现，redis实现，rabbitmq实现
         /// </summary>
         public IDictionary<string, string> Config
         {
@@ -43,7 +44,7 @@ namespace Aix.MessageBus
         /// <param name="context"></param>
         /// <param name="cancellationToken"></param>
         /// <returns></returns>
-        Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context, CancellationToken cancellationToken=default);
+        Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context=null, CancellationToken cancellationToken=default);
 
     }
 

@@ -86,7 +86,7 @@ namespace Aix.MessageBus.Kafka.Impl
                     {
                         try
                         {
-                            await Consume();
+                            await Consumer();
                         }
                         catch (ConsumeException ex)
                         {
@@ -116,7 +116,7 @@ namespace Aix.MessageBus.Kafka.Impl
             return Task.CompletedTask;
         }
 
-        private async Task Consume()
+        private async Task Consumer()
         {
             var result = this._consumer.Consume(TimeSpan.FromSeconds(1));
             if (result == null || result.IsPartitionEOF || result.Value == null)

@@ -1,4 +1,5 @@
-﻿using Aix.MessageBus.Kafka;
+﻿using Aix.MessageBus;
+using Aix.MessageBus.Kafka;
 using CommandLine;
 using System;
 using System.Collections.Generic;

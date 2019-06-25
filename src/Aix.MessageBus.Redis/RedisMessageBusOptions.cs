@@ -9,20 +9,20 @@ namespace Aix.MessageBus.Redis
     {
         public RedisMessageBusOptions()
         {
-            this.TopicPrefix = "kafka-";
+            this.TopicPrefix = "redis:";
             this.Serializer = new MessagePackSerializer();
+            this.DefaultConsumerThreadCount = 2;
         }
 
         /// <summary>
         /// RedisConnectionString和ConnectionMultiplexer传一个即可
         /// </summary>
-        public string RedisConnectionString { get; set; }
+        public string ConnectionString { get; set; }
 
         /// <summary>
         ///  RedisConnectionString和ConnectionMultiplexer传一个即可
         /// </summary>
         public ConnectionMultiplexer ConnectionMultiplexer { get; set; }
-
 
         /// <summary>
         /// topic前缀，为了防止重复，建议用项目名称
@@ -33,5 +33,10 @@ namespace Aix.MessageBus.Redis
         /// 自定义序列化，默认为MessagePack
         /// </summary>
         public ISerializer Serializer { get; set; }
+
+        /// <summary>
+        /// 默认每个类型的消费线程数 默认4个
+        /// </summary>
+        public int DefaultConsumerThreadCount { get; set; }
     }
 }
