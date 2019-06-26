@@ -22,6 +22,8 @@ namespace Aix.MessageBus.Redis.Impl
         IDatabase _database;
         DistributedLock _distributedLock;
 
+        TimeSpan NoAckReEnqueueDelay = TimeSpan.FromSeconds(30);
+
         public RedisConsumer(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
@@ -66,8 +68,7 @@ namespace Aix.MessageBus.Redis.Impl
         {
             Task.Run(async () =>
             {
-                TimeSpan delayTime = TimeSpan.FromSeconds(30);
-                await Task.Delay(delayTime);
+                await Task.Delay(NoAckReEnqueueDelay);
                 //分布式锁
                 var lockKey = $"{_options.TopicPrefix}ProcessNoAck:lock";
                 await _distributedLock.Lock(lockKey, TimeSpan.FromMinutes(2),async() =>
@@ -109,7 +110,7 @@ namespace Aix.MessageBus.Redis.Impl
                 var executeTime = DateUtils.ToDateTimeNullable(value);
                 if (executeTime != null)
                 {//准备执行了，但是没有收到确认（执行失败或者没执行）
-                    if (DateTime.Now - executeTime.Value > TimeSpan.FromSeconds(30))
+                    if (DateTime.Now - executeTime.Value > NoAckReEnqueueDelay)
                     {
                         await ReEnquene(topic, jobId);
                         deleteCount++;
@@ -118,7 +119,7 @@ namespace Aix.MessageBus.Redis.Impl
                 else
                 {//抓取到了，修改ExecuteTime时间出错了，没成功。这种情况不考虑
                     //var createTime = DateUtils.ToDateTimeNullable(await _database.HashGetAsync(GetJobHashId(jobId), "CreateTime"));
-                    //if (createTime.HasValue && DateTime.Now - createTime.Value > TimeSpan.FromSeconds(30))
+                    //if (createTime.HasValue && DateTime.Now - createTime.Value > NoAckReEnqueueDelay)
                     //{
                     //    await ReEnquene(topic, jobId);
                     //    deleteCount++;
@@ -237,7 +238,11 @@ namespace Aix.MessageBus.Redis.Impl
             var trans = _database.CreateTransaction();
              trans.ListRemoveAsync(GetProcessingQueueName(topic), jobId);
              trans.KeyDeleteAsync(GetJobHashId(jobId));
-            return trans.ExecuteAsync();
+
+            return With.ReTry(_logger, () =>
+            {
+                return trans.ExecuteAsync();
+            }, "redismessagebus CommitACK");
         }
 
         /// <summary>

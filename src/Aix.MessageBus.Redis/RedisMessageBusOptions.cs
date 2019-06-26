@@ -11,7 +11,7 @@ namespace Aix.MessageBus.Redis
         {
             this.TopicPrefix = "redis:";
             this.Serializer = new MessagePackSerializer();
-            this.DefaultConsumerThreadCount = 2;
+            this.DefaultConsumerThreadCount = 4;
             this.ConsumerMode = ConsumerMode.AtLeastOnce;
         }
 

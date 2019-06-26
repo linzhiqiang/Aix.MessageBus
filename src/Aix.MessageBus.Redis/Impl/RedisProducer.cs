@@ -6,6 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Aix.MessageBus.Redis.Model;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
+using Aix.MessageBus.Utils;
 
 namespace Aix.MessageBus.Redis.Impl
 {
@@ -22,10 +23,10 @@ namespace Aix.MessageBus.Redis.Impl
         {
             _serviceProvider = serviceProvider;
 
-            _logger = serviceProvider.GetService<ILogger<RedisProducer>>();
-            _options = serviceProvider.GetService<RedisMessageBusOptions>();
+            _logger = _serviceProvider.GetService<ILogger<RedisProducer>>();
+            _options = _serviceProvider.GetService<RedisMessageBusOptions>();
 
-            _connectionMultiplexer = serviceProvider.GetService<ConnectionMultiplexer>();
+            _connectionMultiplexer = _serviceProvider.GetService<ConnectionMultiplexer>();
             _database = _connectionMultiplexer.GetDatabase();
         }
 
@@ -36,8 +37,6 @@ namespace Aix.MessageBus.Redis.Impl
 
         public Task<bool> ProduceAsync(string topic, JobData jobData)
         {
-            //1加入hashset
-            //插入list
             var values = jobData.ToDictionary();
             var hashJobId = GetJobHashId(jobData.JobId);
 
@@ -45,7 +44,12 @@ namespace Aix.MessageBus.Redis.Impl
             trans.HashSetAsync(hashJobId, values.ToArray());
             trans.KeyExpireAsync(hashJobId, TimeSpan.FromDays(7));
             trans.ListLeftPushAsync(topic, jobData.JobId);
-            return trans.ExecuteAsync();
+
+            return With.ReTry<bool>(this._logger, () =>
+            {
+                return trans.ExecuteAsync();
+            }, "redismessagebus ProduceAsync");
+
         }
 
         private string GetJobHashId(string jobId)

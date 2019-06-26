@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 namespace Aix.MessageBus.Redis
 {
     /// <summary>
-    /// 仅实现队列功能，语义：至少一次
+    /// 仅实现队列功能
     /// </summary>
     public class RedisMessageBus : IMessageBus
     {
@@ -73,7 +73,6 @@ namespace Aix.MessageBus.Redis
             }
            
         }
-
 
         public void Dispose()
         {
