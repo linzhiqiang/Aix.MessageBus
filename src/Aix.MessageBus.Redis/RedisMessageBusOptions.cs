@@ -12,6 +12,7 @@ namespace Aix.MessageBus.Redis
             this.TopicPrefix = "redis:";
             this.Serializer = new MessagePackSerializer();
             this.DefaultConsumerThreadCount = 2;
+            this.ConsumerMode = ConsumerMode.AtLeastOnce;
         }
 
         /// <summary>
@@ -38,5 +39,10 @@ namespace Aix.MessageBus.Redis
         /// 默认每个类型的消费线程数 默认4个
         /// </summary>
         public int DefaultConsumerThreadCount { get; set; }
+
+        /// <summary>
+        /// 消费模式 语义 默认至少一次
+        /// </summary>
+        public ConsumerMode ConsumerMode { get; set; } 
     }
 }

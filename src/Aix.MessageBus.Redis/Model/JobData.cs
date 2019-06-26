@@ -11,10 +11,14 @@ namespace Aix.MessageBus.Redis.Model
         {
             return new JobData
             {
-                JobId = Guid.NewGuid().ToString(),
                 Data = data,
                 CreateTime = DateTime.Now
             };
+        }
+
+        public JobData()
+        {
+            JobId = Guid.NewGuid().ToString().Replace("-", "");
         }
     public string JobId { get; set; }
 

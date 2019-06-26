@@ -38,14 +38,14 @@ namespace Aix.MessageBus.Kafka
             await _producer.ProduceAsync(GetTopic(messageType), new Message<Null, MessageBusData> { Value = data });
         }
 
-        public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext messageBusContext, CancellationToken cancellationToken)
+        public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context=null, CancellationToken cancellationToken=default)
         {
             string topic = GetTopic(typeof(T));
 
-            messageBusContext = messageBusContext ?? new MessageBusContext();
-            var groupId = messageBusContext.Config.GetValue("group.id", "groupid");
+            context = context ?? new MessageBusContext();
+            var groupId = context.Config.GetValue("group.id", "groupid");
             groupId = !string.IsNullOrEmpty(groupId) ? groupId : _kafkaOptions.DefaultConsumerGroupId;
-            var threadCountStr = messageBusContext.Config.GetValue("consumer.thread.count", "ConsumerThreadCount");
+            var threadCountStr = context.Config.GetValue("consumer.thread.count", "ConsumerThreadCount");
             var threadCount = !string.IsNullOrEmpty(threadCountStr) ? int.Parse(threadCountStr) : _kafkaOptions.DefaultConsumerThreadCount;
             AssertUtils.IsTrue(threadCount > 0, "消费者线程数必须大于0");
 

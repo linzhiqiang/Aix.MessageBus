@@ -1,5 +1,6 @@
 ﻿using Aix.MessageBus;
 using Aix.MessageBus.Kafka;
+using Aix.MessageBus.RabbitMQ;
 using Aix.MessageBus.Redis;
 using Aix.MessageBus.Utils;
 using CommandLine;
@@ -14,7 +15,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace Sample.kafka
+namespace Sample
 {
     /*
     dotnet run -m 1 -q 100  //生产者测试
@@ -58,28 +59,37 @@ namespace Sample.kafka
                     if (context.HostingEnvironment.IsDevelopment()) //IsStaging(),IsProduction()
                     {
                     }
-
                     services.AddSingleton(options);
-                    var kafkaMessageBusOptions = context.Configuration.GetSection("kafka").Get<KafkaMessageBusOptions>();
 
-                   // kafkaMessageBusOptions.ClientMode = options.Mode;//这里方便测试，以命令行参数为准
+                    //测试哪个messagebus
+                    var messagebusType = 2;// 0=memory 1=kafka  2=redis 3 rabbitmq
 
-                    //services.AddKafkaMessageBus(kafkaMessageBusOptions);
+                    switch (messagebusType)
+                    {
+                        case 0:
+                            services.AddInMemoryMessageBus(new InMemoryMessageBusOptions());
+                            break;
+                        case 1:
+                            var kafkaMessageBusOptions = context.Configuration.GetSection("kafka").Get<KafkaMessageBusOptions>();
+                            services.AddKafkaMessageBus(kafkaMessageBusOptions);
+                            break;
+                        case 2:
+                            var redisMessageBusOptions = context.Configuration.GetSection("redis-messagebus").Get<RedisMessageBusOptions>();
+                            services.AddRedisMessageBus(redisMessageBusOptions);
+                            break;
+                        case 3:
+                            var rabbitMQMessageBusOptions = context.Configuration.GetSection("rabbitmq").Get<RabbitMQMessageBusOptions>();
+                            services.AddRabbitMQMessageBus(rabbitMQMessageBusOptions);
+                            break;
+                        default:
+                            break;
+                    }
 
-                    //RedisMessageBusOptions redisMessageBusOptions = new RedisMessageBusOptions
-                    //{
-                    //    ConnectionString = "192.168.111.132:6379",
-                    //     TopicPrefix="redis:",
-                    //      ConsumerThreadCount=4
-                    //};
-                   var  redisMessageBusOptions = context.Configuration.GetSection("redis-messagebus").Get<RedisMessageBusOptions>();
-                    services.AddRedisMessageBus(redisMessageBusOptions);
-
-                    if ((options.Mode & ClientMode.Consumer) > 0)
+                    if ((options.Mode & (int)ClientMode.Consumer) > 0)
                     {
                         services.AddHostedService<MessageBusConsumeService>();
                     }
-                    if ((options.Mode & ClientMode.Producer) > 0)
+                    if ((options.Mode & (int)ClientMode.Producer) > 0)
                     {
                         services.AddHostedService<MessageBusProduerService>();
                     }

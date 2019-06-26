@@ -4,10 +4,18 @@ using System.Text;
 
 namespace Aix.MessageBus
 {
-    [Flags]
-    public enum ClientMode
+
+
+    public enum ConsumerMode
     {
-        Producer = 1,
-        Consumer = 2
+        /// <summary>
+        /// 至少一次
+        /// </summary>
+        AtLeastOnce = 0,
+
+        /// <summary>
+        /// 至多一次
+        /// </summary>
+        AtMostOnce = 1
     }
 }

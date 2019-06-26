@@ -6,6 +6,9 @@ using System.Threading.Tasks;
 
 namespace Aix.MessageBus.Redis.Foundation
 {
+    /// <summary>
+    /// 分布式锁
+    /// </summary>
   public  class DistributedLock
     {
         private readonly IDatabase _redisDb;

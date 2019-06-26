@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Sample.kafka
+namespace Sample
 {
     public class MessageBusProduerService : IHostedService
     {

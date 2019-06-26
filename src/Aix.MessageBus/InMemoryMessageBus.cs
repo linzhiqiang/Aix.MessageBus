@@ -49,7 +49,7 @@ namespace Aix.MessageBus
             return Task.CompletedTask;
         }
 
-        public Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context, CancellationToken cancellationToken)
+        public Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context=null, CancellationToken cancellationToken=default)
         {
             string handlerKey = GetHandlerKey(typeof(T));
             var subscriber = new InMemorySubscriberInfo

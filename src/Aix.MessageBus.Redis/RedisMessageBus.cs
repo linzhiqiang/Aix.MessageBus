@@ -49,7 +49,7 @@ namespace Aix.MessageBus.Redis
             AssertUtils.IsTrue(result, $"redis生产者失败,topic:{topic}");
         }
 
-        public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context, CancellationToken cancellationToken = default)
+        public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context=null, CancellationToken cancellationToken = default)
         {
             var topic = GetTopic(typeof(T));
             AssertUtils.IsTrue(!Subscribers.Contains(topic), "该类型重复订阅");
