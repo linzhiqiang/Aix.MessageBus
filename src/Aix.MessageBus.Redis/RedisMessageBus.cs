@@ -76,6 +76,8 @@ namespace Aix.MessageBus.Redis
 
         public void Dispose()
         {
+            _producer.Dispose();
+
             foreach (var item in _consumers)
             {
                 item.Dispose();

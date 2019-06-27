@@ -41,7 +41,7 @@ namespace Aix.MessageBus.Kafka.Impl
             _logger.LogInformation("Kafka关闭生产者");
             if (this._producer != null)
             {
-                With.NoException(_logger, () => { this._producer.Dispose(); }, "关闭生产者");
+                With.NoException(_logger, () => { this._producer.Dispose(); }, "Kafka关闭生产者");
             }
         }
 

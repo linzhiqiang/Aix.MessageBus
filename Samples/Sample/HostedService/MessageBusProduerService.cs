@@ -34,6 +34,7 @@ namespace Sample
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
+            Console.WriteLine("StopAsync");
             return Task.CompletedTask;
         }
 
