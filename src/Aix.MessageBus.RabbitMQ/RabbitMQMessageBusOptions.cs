@@ -14,7 +14,7 @@ namespace Aix.MessageBus.RabbitMQ
             this.TopicPrefix = "rabbitmq-";
             this.Serializer = new MessagePackSerializer();
             this.DefaultConsumerThreadCount = 4;
-            this.ConsumerMode = ConsumerMode.AtLeastOnce;
+            this.AutoAck = true;
         }
         public string HostName { get; set; }
 
@@ -43,9 +43,6 @@ namespace Aix.MessageBus.RabbitMQ
         /// </summary>
         public int DefaultConsumerThreadCount { get; set; }
 
-        /// <summary>
-        /// 消费模式 语义 默认至少一次
-        /// </summary>
-        public ConsumerMode ConsumerMode { get; set; }
+        public bool AutoAck { get; set; }
     }
 }

@@ -32,7 +32,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             _connection = _serviceProvider.GetService<IConnection>();
             _channel = _connection.CreateModel();
 
-            _autoAck = _options.ConsumerMode == ConsumerMode.AtMostOnce;
+            _autoAck = _options.AutoAck;
         }
 
 
@@ -60,11 +60,12 @@ namespace Aix.MessageBus.RabbitMQ.Impl
                                      autoDelete: false,
                                      arguments: null);
 
-            _channel.BasicQos(0, 1, false); //客户端最多保留10调未确认的消息 只有autoack=false 有用
+           
 
             //绑定交换器到队列
             _channel.QueueBind(queue, exchange, routingKey);
 
+            _channel.BasicQos(0, 10, false); //客户端最多保留10条未确认的消息 只有autoack=false 有用
             var consumer = new EventingBasicConsumer(_channel);
             consumer.Received += Received;
             String consumerTag = _channel.BasicConsume(queue, _autoAck, topic, consumer);
@@ -86,7 +87,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             {
                 if (!_autoAck)
                 {
-                    _channel.BasicAck(ea.DeliveryTag, false);
+                    _channel.BasicAck(ea.DeliveryTag, false); //可以优化成批量提交 如没10条提交一次 true，最后关闭时记得也要提交最后一次的消费
                 }
             }
         }
