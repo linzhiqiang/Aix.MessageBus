@@ -25,7 +25,7 @@ namespace Aix.MessageBus.RabbitMQ
 
             var factory = new ConnectionFactory()
             {
-                HostName = options.HostName,
+                //HostName = options.HostName,
                 Port = options.Port,
                 VirtualHost = options.VirtualHost,
                 UserName = options.UserName,

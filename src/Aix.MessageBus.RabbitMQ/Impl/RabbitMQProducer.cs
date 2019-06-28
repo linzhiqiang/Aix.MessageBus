@@ -28,6 +28,8 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             _connection = _serviceProvider.GetService<IConnection>();
             _channel = _connection.CreateModel();
 
+            if (_options.ConfirmSelect) _channel.ConfirmSelect();
+
             _basicProperties = _channel.CreateBasicProperties();
             _basicProperties.ContentType = "text/plain";
             _basicProperties.DeliveryMode = 2;
@@ -36,13 +38,18 @@ namespace Aix.MessageBus.RabbitMQ.Impl
         {
             var exchange = Helper.GeteExchangeName(topic);
             var routingKey = Helper.GeteRoutingKey(topic);
-            
+
             _channel.BasicPublish(exchange: exchange,
                                               routingKey: routingKey,
                                               basicProperties: _basicProperties,
                                               body: data);
 
-            return Task.FromResult(true) ;
+            var isOk = true;
+            if (_options.ConfirmSelect)
+            {
+                isOk = _channel.WaitForConfirms();
+            }
+            return Task.FromResult(isOk);
         }
 
         public void Dispose()

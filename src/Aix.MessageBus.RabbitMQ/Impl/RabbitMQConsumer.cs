@@ -21,8 +21,8 @@ namespace Aix.MessageBus.RabbitMQ.Impl
         IModel _channel;
 
         bool _autoAck = true;
-        ulong _currentDeliveryTag = 0;
-        private int Count = 0;
+        ulong _currentDeliveryTag = 0; //记录最新的消费tag，便于手工确认
+        private int Count = 0;//记录消费记录数，便于手工批量确认
 
         public RabbitMQConsumer(IServiceProvider serviceProvider)
         {
@@ -36,7 +36,6 @@ namespace Aix.MessageBus.RabbitMQ.Impl
 
             _autoAck = _options.AutoAck;
         }
-
 
         public event Func<T, Task> OnMessage;
 
@@ -62,12 +61,10 @@ namespace Aix.MessageBus.RabbitMQ.Impl
                                      autoDelete: false,
                                      arguments: null);
 
-
-
             //绑定交换器到队列
             _channel.QueueBind(queue, exchange, routingKey);
 
-            var prefetchCount = _options.ManualCommitBatch;  //> ushort.MaxValue ? ushort.MaxValue : _options.ManualCommitBatch;
+            var prefetchCount = _options.ManualCommitBatch;  //最大值：ushort.MaxValue
             _channel.BasicQos(0, prefetchCount, false); //客户端最多保留这么多条未确认的消息 只有autoack=false 有用
             var consumer = new EventingBasicConsumer(_channel);
             consumer.Received += Received;
@@ -86,7 +83,6 @@ namespace Aix.MessageBus.RabbitMQ.Impl
         {
             try
             {
-
                 var obj = _options.Serializer.Deserialize<T>(deliverEventArgs.Body);
                 Handler(obj);
             }
@@ -126,8 +122,6 @@ namespace Aix.MessageBus.RabbitMQ.Impl
                 }
             }
         }
-
-
 
         /// <summary>
         /// 执行消费事件

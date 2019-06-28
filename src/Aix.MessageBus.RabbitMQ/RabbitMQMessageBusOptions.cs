@@ -13,6 +13,7 @@ namespace Aix.MessageBus.RabbitMQ
 
             this.TopicPrefix = "rabbitmq-";
             this.Serializer = new MessagePackSerializer();
+            this.ConfirmSelect = false;
             this.DefaultConsumerThreadCount = 4;
             this.AutoAck = true;
             this.ManualCommitBatch = 10;
@@ -40,10 +41,18 @@ namespace Aix.MessageBus.RabbitMQ
         public ISerializer Serializer { get; set; }
 
         /// <summary>
+        /// 发布消息时是否确认消息收到确认 false=不确认 true=确认，默认false
+        /// </summary>
+        public bool ConfirmSelect { get; set; }
+
+        /// <summary>
         /// 默认每个类型的消费线程数 默认4个
         /// </summary>
         public int DefaultConsumerThreadCount { get; set; }
 
+        /// <summary>
+        /// 消费时是否自动确认
+        /// </summary>
         public bool AutoAck { get; set; }
 
         /// <summary>
