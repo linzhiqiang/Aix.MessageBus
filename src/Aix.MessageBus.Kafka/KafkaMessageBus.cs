@@ -29,10 +29,7 @@ namespace Aix.MessageBus.Kafka
             _logger = logger;
             _kafkaOptions = kafkaOptions;
 
-            if ((_kafkaOptions.ClientMode & ClientMode.Producer) == ClientMode.Producer)
-            {
-                this._producer = new KafkaProducer<Null, MessageBusData>(this._serviceProvider);
-            }
+            this._producer = new KafkaProducer<Null, MessageBusData>(this._serviceProvider);
         }
 
         public async Task PublishAsync(Type messageType, object message)
@@ -41,12 +38,16 @@ namespace Aix.MessageBus.Kafka
             await _producer.ProduceAsync(GetTopic(messageType), new Message<Null, MessageBusData> { Value = data });
         }
 
-        public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext messageBusContext, CancellationToken cancellationToken)
+        public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context=null, CancellationToken cancellationToken=default)
         {
             string topic = GetTopic(typeof(T));
-            var groupId = messageBusContext.Config.GetValue("group.id", "groupid");
-            var threadCountStr = messageBusContext.Config.GetValue("consumer.thread.count", "ConsumerThreadCount");
-            var threadCount = !string.IsNullOrEmpty(threadCountStr) ? int.Parse(threadCountStr) : _kafkaOptions.ConsumerThreadCount;
+
+            context = context ?? new MessageBusContext();
+            var groupId = context.Config.GetValue("group.id", "groupid");
+            groupId = !string.IsNullOrEmpty(groupId) ? groupId : _kafkaOptions.DefaultConsumerGroupId;
+
+            var threadCountStr = context.Config.GetValue("consumer.thread.count", "ConsumerThreadCount");
+            var threadCount = !string.IsNullOrEmpty(threadCountStr) ? int.Parse(threadCountStr) : _kafkaOptions.DefaultConsumerThreadCount;
             AssertUtils.IsTrue(threadCount > 0, "消费者线程数必须大于0");
 
             var key = $"{topic}_{groupId}";

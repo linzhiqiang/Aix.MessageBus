@@ -1,35 +1,38 @@
-﻿using Confluent.Kafka;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Aix.MessageBus.Kafka
+namespace Aix.MessageBus.RabbitMQ
 {
-    public class KafkaMessageBusOptions
+    public class RabbitMQMessageBusOptions
     {
-        public KafkaMessageBusOptions()
+        public RabbitMQMessageBusOptions()
         {
-            this.TopicPrefix = "kafka-";
+            Port = 5672;
+            VirtualHost = "/";
+
+            this.TopicPrefix = "rabbitmq-";
             this.Serializer = new MessagePackSerializer();
             this.DefaultConsumerThreadCount = 4;
+            this.AutoAck = true;
             this.ManualCommitBatch = 10;
         }
+        public string HostName { get; set; }
 
-        public ProducerConfig ProducerConfig { get; set; }
+        public int Port { get; set; }
 
-        public ConsumerConfig ConsumerConfig { get; set; }
+        public string VirtualHost { get; set; }
 
-        public string BootstrapServers { get; set; }
+        public string UserName { get; set; }
+
+        public string Password { get; set; }
+
+        /***********************************************************/
 
         /// <summary>
         /// topic前缀，为了防止重复，建议用项目名称
         /// </summary>
         public string TopicPrefix { get; set; }
-
-        /// <summary>
-        /// 默认的groupid
-        /// </summary>
-        public string DefaultConsumerGroupId { get; set; }
 
         /// <summary>
         /// 自定义序列化，默认为MessagePack
@@ -41,9 +44,11 @@ namespace Aix.MessageBus.Kafka
         /// </summary>
         public int DefaultConsumerThreadCount { get; set; }
 
+        public bool AutoAck { get; set; }
+
         /// <summary>
-        /// EnableAutoCommit=false时每多少个消息提交一次 默认10条消息提交一次
+        /// AutoAck=false时每多少个消息提交一次 默认10条消息提交一次
         /// </summary>
-        public int ManualCommitBatch { get; set; }
+        public ushort ManualCommitBatch { get; set; }
     }
 }

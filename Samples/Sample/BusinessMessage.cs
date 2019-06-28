@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Sample
 {
-    public class KafkaMessage
+    public class BusinessMessage
     {
         public string MessageId { get; set; }
         public string Content { get; set; }
@@ -12,7 +12,7 @@ namespace Sample
         public DateTime CreateTime { get; set; }
     }
 
-    public class KafkaMessage2
+    public class BusinessMessage2
     {
         public string MessageId { get; set; }
         public string Content { get; set; }

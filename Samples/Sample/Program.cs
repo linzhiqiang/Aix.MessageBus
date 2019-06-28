@@ -1,5 +1,7 @@
 ﻿using Aix.MessageBus;
 using Aix.MessageBus.Kafka;
+using Aix.MessageBus.RabbitMQ;
+using Aix.MessageBus.Redis;
 using Aix.MessageBus.Utils;
 using CommandLine;
 using Confluent.Kafka;
@@ -16,9 +18,9 @@ using System.Threading.Tasks;
 namespace Sample
 {
     /*
-    dotnet run -m 1 -q 100  //生产者测试
+    dotnet run -m 1 -q 10000  //生产者测试
     dotnet run -m 2  //消费者测试
-    dotnet run -m 3 -q 100 //生产者消费者一起测试
+    dotnet run -m 3 -q 10000 //生产者消费者一起测试
      */
 
     class Program
@@ -57,21 +59,38 @@ namespace Sample
                     if (context.HostingEnvironment.IsDevelopment()) //IsStaging(),IsProduction()
                     {
                     }
-
                     services.AddSingleton(options);
-                    var kafkaMessageBusOptions = context.Configuration.GetSection("kafka").Get<KafkaMessageBusOptions>();
 
-                    // var  test = ObjectUtils.Copy(kafkaMessageBusOptions.ConsumerConfig);
+                    //测试哪个messagebus
+                    var messagebusType = 3;// 0=memory 1=kafka  2=redis 3 rabbitmq
 
-                    kafkaMessageBusOptions.ClientMode = options.Mode;//这里方便测试，以命令行参数为准
+                    switch (messagebusType)
+                    {
+                        case 0:
+                            services.AddInMemoryMessageBus(new InMemoryMessageBusOptions());
+                            break;
+                        case 1:
+                            var kafkaMessageBusOptions = context.Configuration.GetSection("kafka").Get<KafkaMessageBusOptions>();
+                            services.AddKafkaMessageBus(kafkaMessageBusOptions);
+                            break;
+                        case 2:
+                            var redisMessageBusOptions = context.Configuration.GetSection("redis-messagebus").Get<RedisMessageBusOptions>();
+                            //services.AddRedisMessageBus(redisMessageBusOptions); //list实现
+                            services.AddRedisMessageBusPubSub(redisMessageBusOptions);//发布订阅实现
+                            break;
+                        case 3:
+                            var rabbitMQMessageBusOptions = context.Configuration.GetSection("rabbitmq").Get<RabbitMQMessageBusOptions>();
+                            services.AddRabbitMQMessageBus(rabbitMQMessageBusOptions);
+                            break;
+                        default:
+                            break;
+                    }
 
-                    services.AddKafkaMessageBus(kafkaMessageBusOptions);
-
-                    if ((kafkaMessageBusOptions.ClientMode & ClientMode.Consumer) > 0)
+                    if ((options.Mode & (int)ClientMode.Consumer) > 0)
                     {
                         services.AddHostedService<MessageBusConsumeService>();
                     }
-                    if ((kafkaMessageBusOptions.ClientMode & ClientMode.Producer) > 0)
+                    if ((options.Mode & (int)ClientMode.Producer) > 0)
                     {
                         services.AddHostedService<MessageBusProduerService>();
                     }
@@ -101,10 +120,9 @@ namespace Sample
                                                                                                     // bootstrapServers = "192.168.72.132:9092,192.168.72.132:9093,192.168.72.132:9094";//home 虚拟机
             var options = new KafkaMessageBusOptions
             {
-                ClientMode = mode,
                 TopicPrefix = "kafka-", //项目名称
                 Serializer = new MessagePackSerializer(), //默认也是该值
-                ConsumerThreadCount = 4, //总部署线程数不要大于分区数
+                DefaultConsumerThreadCount = 4, //总部署线程数不要大于分区数
                 ManualCommitBatch = 100,
                 ProducerConfig = new ProducerConfig
                 {
