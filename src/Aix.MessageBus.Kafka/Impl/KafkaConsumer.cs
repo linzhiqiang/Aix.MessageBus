@@ -123,7 +123,6 @@ namespace Aix.MessageBus.Kafka.Impl
             {
                 return;
             }
-            Count++;
             //消费数据
             await Handler(result);
 
@@ -141,6 +140,7 @@ namespace Aix.MessageBus.Kafka.Impl
             //处理手动提交
             if (EnableAutoCommit() == false)
             {
+                Count++;
                 var topicPartition = result.TopicPartition;
                 var topicPartitionOffset = new TopicPartitionOffset(topicPartition, result.Offset + 1);
                 AddToOffsetDict(topicPartition, topicPartitionOffset); //加入offset缓存 
@@ -152,6 +152,7 @@ namespace Aix.MessageBus.Kafka.Impl
                     {
                         this._consumer.Commit(new[] { maxOffset });
                     }, "手动提交偏移量");
+                    Count = 0;
                 }
             }
         }

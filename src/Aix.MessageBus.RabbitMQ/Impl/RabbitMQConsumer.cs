@@ -21,6 +21,8 @@ namespace Aix.MessageBus.RabbitMQ.Impl
         IModel _channel;
 
         bool _autoAck = true;
+        ulong _currentDeliveryTag = 0;
+        private int Count = 0;
 
         public RabbitMQConsumer(IServiceProvider serviceProvider)
         {
@@ -38,16 +40,16 @@ namespace Aix.MessageBus.RabbitMQ.Impl
 
         public event Func<T, Task> OnMessage;
 
-        public Task Subscribe(string topic, CancellationToken cancellationToken)
+        public Task Subscribe(string topic, string groupId, CancellationToken cancellationToken)
         {
-            var exchange = $"{topic}-exchange";
-            var routingKey = $"{topic}-routingkey";
-            var queue = $"{topic}-queue";
+            var exchange = Helper.GeteExchangeName(topic);
+            var routingKey = Helper.GeteRoutingKey(topic);
+            var queue = Helper.GeteQueueName(topic, groupId);
 
             //定义交换器
             _channel.ExchangeDeclare(
                exchange: exchange,
-               type: ExchangeType.Direct,
+               type: ExchangeType.Fanout,//ExchangeType.Direct,
                durable: true,
                 autoDelete: false,
                 arguments: null
@@ -60,23 +62,32 @@ namespace Aix.MessageBus.RabbitMQ.Impl
                                      autoDelete: false,
                                      arguments: null);
 
-           
+
 
             //绑定交换器到队列
             _channel.QueueBind(queue, exchange, routingKey);
 
-            _channel.BasicQos(0, 10, false); //客户端最多保留10条未确认的消息 只有autoack=false 有用
+            var prefetchCount = _options.ManualCommitBatch;  //> ushort.MaxValue ? ushort.MaxValue : _options.ManualCommitBatch;
+            _channel.BasicQos(0, prefetchCount, false); //客户端最多保留这么多条未确认的消息 只有autoack=false 有用
             var consumer = new EventingBasicConsumer(_channel);
             consumer.Received += Received;
+            consumer.Shutdown += Consumer_Shutdown;
+
             String consumerTag = _channel.BasicConsume(queue, _autoAck, topic, consumer);
             return Task.CompletedTask;
         }
 
-        private void Received(object sender, BasicDeliverEventArgs ea)
+        private void Consumer_Shutdown(object sender, ShutdownEventArgs e)
+        {
+            // _logger.LogInformation($"RabbitMQ关闭消费者，reason:{e.ReplyText}");
+        }
+
+        private void Received(object sender, BasicDeliverEventArgs deliverEventArgs)
         {
             try
             {
-                var obj = _options.Serializer.Deserialize<T>(ea.Body);
+
+                var obj = _options.Serializer.Deserialize<T>(deliverEventArgs.Body);
                 Handler(obj);
             }
             catch (Exception ex)
@@ -85,12 +96,38 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             }
             finally
             {
-                if (!_autoAck)
+                _currentDeliveryTag = deliverEventArgs.DeliveryTag;// _currentDeliveryTag = deliverEventArgs.DeliveryTag;//放在消费后，防止未处理完成但是关闭时也确认了该消息
+                Count++;
+                ManualAck(false);
+            }
+        }
+
+        private void ManualAck(bool isForce)
+        {
+            if (_autoAck) return;
+            //单条确认
+            // _channel.BasicAck(deliverEventArgs.DeliveryTag, false); //可以优化成批量提交 如没10条提交一次 true，最后关闭时记得也要提交最后一次的消费
+
+            //批量确认
+            if (isForce) //关闭时强制确认剩余的
+            {
+                if (Count > 0)
                 {
-                    _channel.BasicAck(ea.DeliveryTag, false); //可以优化成批量提交 如没10条提交一次 true，最后关闭时记得也要提交最后一次的消费
+                    // _logger.LogInformation("关闭时确认剩余的未确认消息"+ _currentDeliveryTag);
+                    With.NoException(_logger, () => { _channel.BasicAck(_currentDeliveryTag, true); }, "关闭时确认剩余的未确认消息");
+                }
+            }
+            else //按照批量确认
+            {
+                if (Count % _options.ManualCommitBatch == 0)
+                {
+                    With.NoException(_logger, () => { _channel.BasicAck(_currentDeliveryTag, true); }, "批量手工确认消息");
+                    Count = 0;
                 }
             }
         }
+
+
 
         /// <summary>
         /// 执行消费事件
@@ -111,7 +148,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
         public void Close()
         {
             _logger.LogInformation("RabbitMQ关闭消费者");
-
+            With.NoException(_logger, () => { ManualAck(true); }, "关闭消费者前手工确认最后未确认的消息");
             With.NoException(_logger, () => { this._channel?.Close(); }, "关闭消费者");
         }
 

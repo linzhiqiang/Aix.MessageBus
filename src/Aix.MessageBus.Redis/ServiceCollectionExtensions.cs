@@ -9,6 +9,12 @@ namespace Aix.MessageBus.Redis
 {
     public static class ServiceCollectionExtensions
     {
+        /// <summary>
+        /// 利用list实现队列功能，不支持同一类型多次订阅
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
         public static IServiceCollection AddRedisMessageBus(this IServiceCollection services, RedisMessageBusOptions options)
         {
             AddService(services, options);
@@ -16,6 +22,12 @@ namespace Aix.MessageBus.Redis
             return services;
         }
 
+        /// <summary>
+        /// 利用redis发布订阅功能实现
+        /// </summary>
+        /// <param name="services"></param>
+        /// <param name="options"></param>
+        /// <returns></returns>
         public static IServiceCollection AddRedisMessageBusPubSub(this IServiceCollection services, RedisMessageBusOptions options)
         {
             AddService(services, options);

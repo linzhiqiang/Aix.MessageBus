@@ -264,6 +264,7 @@ namespace Aix.MessageBus.Redis.Impl
         public void Close()
         {
             this._isStart = false;
+            _logger.LogInformation("redis关闭消费者");
         }
 
         public void Dispose()

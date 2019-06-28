@@ -15,6 +15,7 @@ namespace Aix.MessageBus.RabbitMQ
             this.Serializer = new MessagePackSerializer();
             this.DefaultConsumerThreadCount = 4;
             this.AutoAck = true;
+            this.ManualCommitBatch = 10;
         }
         public string HostName { get; set; }
 
@@ -44,5 +45,10 @@ namespace Aix.MessageBus.RabbitMQ
         public int DefaultConsumerThreadCount { get; set; }
 
         public bool AutoAck { get; set; }
+
+        /// <summary>
+        /// AutoAck=false时每多少个消息提交一次 默认10条消息提交一次
+        /// </summary>
+        public ushort ManualCommitBatch { get; set; }
     }
 }

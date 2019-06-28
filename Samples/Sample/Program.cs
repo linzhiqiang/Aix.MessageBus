@@ -18,9 +18,9 @@ using System.Threading.Tasks;
 namespace Sample
 {
     /*
-    dotnet run -m 1 -q 100  //生产者测试
+    dotnet run -m 1 -q 10000  //生产者测试
     dotnet run -m 2  //消费者测试
-    dotnet run -m 3 -q 100 //生产者消费者一起测试
+    dotnet run -m 3 -q 10000 //生产者消费者一起测试
      */
 
     class Program
@@ -75,7 +75,8 @@ namespace Sample
                             break;
                         case 2:
                             var redisMessageBusOptions = context.Configuration.GetSection("redis-messagebus").Get<RedisMessageBusOptions>();
-                            services.AddRedisMessageBus(redisMessageBusOptions);
+                            //services.AddRedisMessageBus(redisMessageBusOptions); //list实现
+                            services.AddRedisMessageBusPubSub(redisMessageBusOptions);//发布订阅实现
                             break;
                         case 3:
                             var rabbitMQMessageBusOptions = context.Configuration.GetSection("rabbitmq").Get<RabbitMQMessageBusOptions>();

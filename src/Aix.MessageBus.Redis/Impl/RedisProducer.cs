@@ -32,7 +32,7 @@ namespace Aix.MessageBus.Redis.Impl
 
         public void Dispose()
         {
-
+            _logger.LogInformation("redis关闭生产者");
         }
 
         public Task<bool> ProduceAsync(string topic, JobData jobData)

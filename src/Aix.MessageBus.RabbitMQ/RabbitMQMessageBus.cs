@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 
 namespace Aix.MessageBus.RabbitMQ
 {
+    /// <summary>
+    /// rabbitMQ实现发布订阅模式
+    /// </summary>
     public class RabbitMQMessageBus : IMessageBus
     {
         private IServiceProvider _serviceProvider;
@@ -41,13 +44,17 @@ namespace Aix.MessageBus.RabbitMQ
         public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default)
         {
             var topic = GetTopic(typeof(T));
-            AssertUtils.IsTrue(!Subscribers.Contains(topic), "该类型重复订阅");
-            Subscribers.Add(topic);
 
             context = context ?? new MessageBusContext();
+            var groupId = context.Config.GetValue("group.id", "groupid") ?? string.Empty;
+
             var threadCountStr = context.Config.GetValue("consumer.thread.count", "ConsumerThreadCount");
             var threadCount = !string.IsNullOrEmpty(threadCountStr) ? int.Parse(threadCountStr) : _options.DefaultConsumerThreadCount;
             AssertUtils.IsTrue(threadCount > 0, "消费者线程数必须大于0");
+
+            var key = $"{topic}_{groupId}";
+            AssertUtils.IsTrue(!Subscribers.Contains(key), "该类型重复订阅，如果需要订阅请区分不同的GroupId");
+            Subscribers.Add(key);
 
             _logger.LogInformation($"订阅[{topic}],threadcount={threadCount}");
             for (int i = 0; i < threadCount; i++)
@@ -58,7 +65,7 @@ namespace Aix.MessageBus.RabbitMQ
                {
                   await handler(obj);
                };
-                await consumer.Subscribe(topic, cancellationToken);
+                await consumer.Subscribe(topic, groupId, cancellationToken);
             }
         }
 
@@ -74,7 +81,6 @@ namespace Aix.MessageBus.RabbitMQ
             With.NoException(_logger,()=> {
                 _connection.Close();
             },"关闭rabbitMQ连接");
-         
         }
 
         #region private

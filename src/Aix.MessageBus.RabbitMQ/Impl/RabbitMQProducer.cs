@@ -34,8 +34,9 @@ namespace Aix.MessageBus.RabbitMQ.Impl
         }
         public Task<bool> ProduceAsync(string topic, byte[] data)
         {
-            var exchange = $"{topic}-exchange";
-            var routingKey = $"{topic}-routingkey";
+            var exchange = Helper.GeteExchangeName(topic);
+            var routingKey = Helper.GeteRoutingKey(topic);
+            
             _channel.BasicPublish(exchange: exchange,
                                               routingKey: routingKey,
                                               basicProperties: _basicProperties,

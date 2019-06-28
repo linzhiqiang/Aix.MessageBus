@@ -45,6 +45,7 @@ namespace Aix.MessageBus.Kafka
             context = context ?? new MessageBusContext();
             var groupId = context.Config.GetValue("group.id", "groupid");
             groupId = !string.IsNullOrEmpty(groupId) ? groupId : _kafkaOptions.DefaultConsumerGroupId;
+
             var threadCountStr = context.Config.GetValue("consumer.thread.count", "ConsumerThreadCount");
             var threadCount = !string.IsNullOrEmpty(threadCountStr) ? int.Parse(threadCountStr) : _kafkaOptions.DefaultConsumerThreadCount;
             AssertUtils.IsTrue(threadCount > 0, "消费者线程数必须大于0");

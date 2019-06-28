@@ -49,6 +49,7 @@ namespace Aix.MessageBus.Redis
 
         public void Dispose()
         {
+            _logger.LogInformation("redis关闭消费者");
             _subscriber.UnsubscribeAll();
         }
 

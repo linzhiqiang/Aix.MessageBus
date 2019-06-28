@@ -21,6 +21,8 @@ namespace Aix.MessageBus.RabbitMQ
 
         private static IConnection CreateConnection(RabbitMQMessageBusOptions options)
         {
+            if (string.IsNullOrEmpty(options.HostName)) throw new Exception("请配置rabbitMQ的HostName参数");
+
             var factory = new ConnectionFactory()
             {
                 HostName = options.HostName,
@@ -32,8 +34,8 @@ namespace Aix.MessageBus.RabbitMQ
                 AutomaticRecoveryEnabled = true,
                 Protocol = Protocols.DefaultProtocol
             };
-
-            return factory.CreateConnection();
+            var hostNames = options.HostName.Replace(" ","").Split(new char[] { ',' , '，' }, StringSplitOptions.RemoveEmptyEntries);
+            return factory.CreateConnection(hostNames);
         }
     }
 }
