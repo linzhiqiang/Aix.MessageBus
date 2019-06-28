@@ -2,6 +2,13 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Description>MessageBus的rabbitMQ实现</Description>
+    <Authors>linzhiqiang</Authors>
+    <Company>linzhiqiang</Company>
+    <Product>linzhiqiang</Product>
+    <PackageProjectUrl>https://github.com/linzhiqiang/Aix.MessageBus.git</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/linzhiqiang/Aix.MessageBus.git</RepositoryUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>

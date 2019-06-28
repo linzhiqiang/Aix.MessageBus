@@ -2,6 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
+    <Description>MessageBus的redis实现</Description>
+    <Authors>linzhiqiang</Authors>
+    <Product>linzhiqiang</Product>
+    <PackageProjectUrl>https://github.com/linzhiqiang/Aix.MessageBus.git</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/linzhiqiang/Aix.MessageBus.git</RepositoryUrl>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
