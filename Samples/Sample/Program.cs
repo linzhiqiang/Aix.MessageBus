@@ -62,7 +62,7 @@ namespace Sample
                     services.AddSingleton(options);
 
                     //测试哪个messagebus
-                    var messagebusType = 3;// 0=memory 1=kafka  2=redis 3 rabbitmq
+                    var messagebusType = context.Configuration.GetSection("messagebusType").Get<int>();// 0=memory 1=kafka  2=redis 3 rabbitmq
 
                     switch (messagebusType)
                     {
