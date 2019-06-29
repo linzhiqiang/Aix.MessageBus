@@ -35,7 +35,14 @@ namespace Aix.MessageBus.RabbitMQ
                 Protocol = Protocols.DefaultProtocol
             };
             var hostNames = options.HostName.Replace(" ","").Split(new char[] { ',' , '，' }, StringSplitOptions.RemoveEmptyEntries);
-            return factory.CreateConnection(hostNames);
+           var connection =  factory.CreateConnection(hostNames);
+            connection.CallbackException += Connection_CallbackException;
+            return connection;
+        }
+
+        private static void Connection_CallbackException(object sender, global::RabbitMQ.Client.Events.CallbackExceptionEventArgs e)
+        {
+          
         }
     }
 }

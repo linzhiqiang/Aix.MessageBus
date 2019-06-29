@@ -19,7 +19,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
 
         IConnection _connection;
         IModel _channel;
-
+        private volatile bool _isStart = false;
         bool _autoAck = true;
         ulong _currentDeliveryTag = 0; //记录最新的消费tag，便于手工确认
         private int Count = 0;//记录消费记录数，便于手工批量确认
@@ -41,6 +41,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
 
         public Task Subscribe(string topic, string groupId, CancellationToken cancellationToken)
         {
+            _isStart = true;
             var exchange = Helper.GeteExchangeName(topic);
             var routingKey = Helper.GeteRoutingKey(topic);
             var queue = Helper.GeteQueueName(topic, groupId);
@@ -69,18 +70,19 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             var consumer = new EventingBasicConsumer(_channel);
             consumer.Received += Received;
             consumer.Shutdown += Consumer_Shutdown;
-
-            String consumerTag = _channel.BasicConsume(queue, _autoAck, topic, consumer);
+           
+              String consumerTag = _channel.BasicConsume(queue, _autoAck, topic, consumer);
             return Task.CompletedTask;
         }
 
         private void Consumer_Shutdown(object sender, ShutdownEventArgs e)
         {
-            // _logger.LogInformation($"RabbitMQ关闭消费者，reason:{e.ReplyText}");
+             _logger.LogInformation($"RabbitMQ关闭消费者，reason:{e.ReplyText}");
         }
 
         private void Received(object sender, BasicDeliverEventArgs deliverEventArgs)
         {
+           if (!_isStart) return; //这里有必要的，关闭时已经手工提交了，由于客户端还有累计消息会继续执行，但是不能确认（连接已关闭）
             try
             {
                 var obj = _options.Serializer.Deserialize<T>(deliverEventArgs.Body);
@@ -109,7 +111,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             {
                 if (Count > 0)
                 {
-                    // _logger.LogInformation("关闭时确认剩余的未确认消息"+ _currentDeliveryTag);
+                   // _logger.LogInformation("关闭时确认剩余的未确认消息"+ _currentDeliveryTag);
                     With.NoException(_logger, () => { _channel.BasicAck(_currentDeliveryTag, true); }, "关闭时确认剩余的未确认消息");
                 }
             }
@@ -141,8 +143,11 @@ namespace Aix.MessageBus.RabbitMQ.Impl
 
         public void Close()
         {
-            _logger.LogInformation("RabbitMQ关闭消费者");
-            With.NoException(_logger, () => { ManualAck(true); }, "关闭消费者前手工确认最后未确认的消息");
+            _isStart = false;
+            _logger.LogInformation($"RabbitMQ开始关闭消费者......");
+            With.NoException(_logger, () => {
+                ManualAck(true);
+            }, "关闭消费者前手工确认最后未确认的消息");
             With.NoException(_logger, () => { this._channel?.Close(); }, "关闭消费者");
         }
 
