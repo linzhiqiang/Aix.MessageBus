@@ -13,6 +13,7 @@ namespace Aix.MessageBus.Redis
             this.Serializer = new MessagePackSerializer();
             this.DefaultConsumerThreadCount = 4;
             this.ConsumerMode = ConsumerMode.AtLeastOnce;
+            this.NoAckReEnqueueDelay = 30;
         }
 
         /// <summary>
@@ -43,6 +44,11 @@ namespace Aix.MessageBus.Redis
         /// <summary>
         /// 消费模式 语义 默认至少一次
         /// </summary>
-        public ConsumerMode ConsumerMode { get; set; } 
+        public ConsumerMode ConsumerMode { get; set; }
+
+        /// <summary>
+        /// 没有确认重新入队的超时时间 单位：秒，默认30秒
+        /// </summary>
+        public int NoAckReEnqueueDelay { get; set; }
     }
 }

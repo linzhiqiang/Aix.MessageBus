@@ -22,7 +22,7 @@ namespace Aix.MessageBus.Redis.Impl
         IDatabase _database;
         DistributedLock _distributedLock;
 
-        TimeSpan NoAckReEnqueueDelay = TimeSpan.FromSeconds(30);
+        TimeSpan _noAckReEnqueueDelay = TimeSpan.FromSeconds(30);
 
         public RedisConsumer(IServiceProvider serviceProvider)
         {
@@ -34,9 +34,10 @@ namespace Aix.MessageBus.Redis.Impl
             _connectionMultiplexer = serviceProvider.GetService<ConnectionMultiplexer>();
             _database = _connectionMultiplexer.GetDatabase();
             _distributedLock = new DistributedLock(_connectionMultiplexer);
+            _noAckReEnqueueDelay = TimeSpan.FromSeconds(_options.NoAckReEnqueueDelay);
         }
 
-        public event Func<T, Task> OnMessage;
+        public event Func<byte[], Task> OnMessage;
 
         public Task Subscribe(string topic, CancellationToken cancellationToken)
         {
@@ -68,32 +69,32 @@ namespace Aix.MessageBus.Redis.Impl
         {
             Task.Run(async () =>
             {
-                await Task.Delay(NoAckReEnqueueDelay);
+                await Task.Delay(_noAckReEnqueueDelay);
                 //分布式锁
                 var lockKey = $"{_options.TopicPrefix}ProcessNoAck:lock";
-                await _distributedLock.Lock(lockKey, TimeSpan.FromMinutes(2),async() =>
-                {
-                    var processingQueue = GetProcessingQueueName(topic);
+                await _distributedLock.Lock(lockKey, TimeSpan.FromMinutes(2), async () =>
+                 {
+                     var processingQueue = GetProcessingQueueName(topic);
 
-                    //循环拉取 重新入队
-                    int deleteCount = 0;
-                    var length = 0;
-                    var PerBatchSize = 50;
-                    var start = PerBatchSize * -1;
-                    var end = -1;
-                    do
-                    {
-                        var list = _database.ListRange(processingQueue, start, end);
-                        length = list.Length;
-                        deleteCount = await ProcessNoAckJob(topic, list);
+                     //循环拉取 重新入队
+                     int deleteCount = 0;
+                     var length = 0;
+                     var PerBatchSize = 50;
+                     var start = PerBatchSize * -1;
+                     var end = -1;
+                     do
+                     {
+                         var list = _database.ListRange(processingQueue, start, end);
+                         length = list.Length;
+                         deleteCount = await ProcessNoAckJob(topic, list);
 
-                        end = 0 - ((length - deleteCount) + 1);
-                        start = end - PerBatchSize + 1;
+                         end = 0 - ((length - deleteCount) + 1);
+                         start = end - PerBatchSize + 1;
 
-                    }
-                    while (length > 0);
+                     }
+                     while (length > 0);
 
-                },()=> { return Task.CompletedTask; });
+                 }, () => { return Task.CompletedTask; });
             });
 
             return Task.CompletedTask;
@@ -105,25 +106,32 @@ namespace Aix.MessageBus.Redis.Impl
             for (var i = list.Length - 1; i >= 0; i--)
             {
                 var jobId = list[i];
-
+                //var values = await _database.HashGetAsync(GetJobHashId(jobId), new RedisValue[] { "CreateTime", "ExecuteTime" });
+                //var createTime = DateUtils.ToDateTimeNullable(values[0]);
+                //var executeTime = DateUtils.ToDateTimeNullable(values[1]);
                 var value = await _database.HashGetAsync(GetJobHashId(jobId), "ExecuteTime");
                 var executeTime = DateUtils.ToDateTimeNullable(value);
                 if (executeTime != null)
                 {//准备执行了，但是没有收到确认（执行失败或者没执行）
-                    if (DateTime.Now - executeTime.Value > NoAckReEnqueueDelay)
+                    if (DateTime.Now - executeTime.Value > _noAckReEnqueueDelay)
                     {
                         await ReEnquene(topic, jobId);
                         deleteCount++;
                     }
                 }
                 else
-                {//抓取到了，修改ExecuteTime时间出错了，没成功。这种情况不考虑
-                    //var createTime = DateUtils.ToDateTimeNullable(await _database.HashGetAsync(GetJobHashId(jobId), "CreateTime"));
-                    //if (createTime.HasValue && DateTime.Now - createTime.Value > NoAckReEnqueueDelay)
-                    //{
-                    //    await ReEnquene(topic, jobId);
-                    //    deleteCount++;
-                    //}
+                {//抓取到了，修改ExecuteTime时间出错了，没成功。
+                    var createTime = DateUtils.ToDateTimeNullable(await _database.HashGetAsync(GetJobHashId(jobId), "CreateTime"));
+                    if (createTime.HasValue && DateTime.Now - createTime.Value > _noAckReEnqueueDelay)
+                    {
+                        await Task.Delay(100);
+                        executeTime = DateUtils.ToDateTimeNullable(await _database.HashGetAsync(GetJobHashId(jobId), "ExecuteTime"));
+                        if (executeTime == null)
+                        {
+                            await ReEnquene(topic, jobId);
+                            deleteCount++;
+                        }
+                    }
                 }
 
             }
@@ -137,12 +145,12 @@ namespace Aix.MessageBus.Redis.Impl
         /// <param name="topic"></param>
         /// <param name="jobId"></param>
         /// <returns></returns>
-        private  Task ReEnquene(string topic,string jobId)
+        private Task ReEnquene(string topic, string jobId)
         {
             var trans = _database.CreateTransaction();
 
-             trans.ListRemoveAsync(GetProcessingQueueName(topic), jobId);
-             trans.ListLeftPushAsync(topic, jobId);
+            trans.ListRemoveAsync(GetProcessingQueueName(topic), jobId);
+            trans.ListLeftPushAsync(topic, jobId);
 
             return trans.ExecuteAsync();
         }
@@ -178,7 +186,7 @@ namespace Aix.MessageBus.Redis.Impl
 
             return Task.CompletedTask;
         }
-      
+
         /// <summary>
         /// 至少一次
         /// </summary>
@@ -199,10 +207,10 @@ namespace Aix.MessageBus.Redis.Impl
 
             byte[] data = await _database.HashGetAsync(GetJobHashId(jobId), "Data");//取出数据字段
             if (data == null || data.Length == 0) return;
-            var obj = _options.Serializer.Deserialize<T>(data);
-            await Handler(obj);
+            //var obj = _options.Serializer.Deserialize<T>(data);
+            await Handler(data);
 
-            await CommitACK(topic,jobId);
+            await CommitACK(topic, jobId);
         }
 
         /// <summary>
@@ -221,8 +229,8 @@ namespace Aix.MessageBus.Redis.Impl
             }
             byte[] data = await _database.HashGetAsync(GetJobHashId(jobId), "Data");//取出数据字段
             if (data == null || data.Length == 0) return;
-            var obj = _options.Serializer.Deserialize<T>(data);
-            await Handler(obj);
+            //var obj = _options.Serializer.Deserialize<T>(data);
+            await Handler(data);
 
             await _database.KeyDeleteAsync(GetJobHashId(jobId));
         }
@@ -233,11 +241,11 @@ namespace Aix.MessageBus.Redis.Impl
         /// <param name="topic"></param>
         /// <param name="jobId"></param>
         /// <returns></returns>
-        private Task CommitACK(string topic,string jobId)
+        private Task CommitACK(string topic, string jobId)
         {
             var trans = _database.CreateTransaction();
-             trans.ListRemoveAsync(GetProcessingQueueName(topic), jobId);
-             trans.KeyDeleteAsync(GetJobHashId(jobId));
+            trans.ListRemoveAsync(GetProcessingQueueName(topic), jobId);
+            trans.KeyDeleteAsync(GetJobHashId(jobId));
 
             return With.ReTry(_logger, () =>
             {
@@ -250,13 +258,13 @@ namespace Aix.MessageBus.Redis.Impl
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        private async Task Handler(T obj)
+        private async Task Handler(byte[] data)
         {
             if (OnMessage != null)
             {
                 await With.NoException(_logger, async () =>
                 {
-                    await OnMessage(obj);
+                    await OnMessage(data);
                 }, "redis消费失败");
             }
         }

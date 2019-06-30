@@ -75,8 +75,8 @@ namespace Sample
                             break;
                         case 2:
                             var redisMessageBusOptions = context.Configuration.GetSection("redis-messagebus").Get<RedisMessageBusOptions>();
-                            //services.AddRedisMessageBus(redisMessageBusOptions); //list实现
-                            services.AddRedisMessageBusPubSub(redisMessageBusOptions);//发布订阅实现
+                            services.AddRedisMessageBus(redisMessageBusOptions); //list实现
+                            //services.AddRedisMessageBusPubSub(redisMessageBusOptions);//发布订阅实现
                             break;
                         case 3:
                             var rabbitMQMessageBusOptions = context.Configuration.GetSection("rabbitmq").Get<RabbitMQMessageBusOptions>();

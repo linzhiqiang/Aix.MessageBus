@@ -10,7 +10,7 @@ namespace Aix.MessageBus.Redis
     {
         Task Subscribe(string topic, CancellationToken cancellationToken);
 
-        event Func<T, Task> OnMessage;
+        event Func<byte[], Task> OnMessage;
         void Close();
     }
 }

@@ -1,4 +1,5 @@
 ﻿using Aix.MessageBus;
+using Aix.MessageBus.Utils;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
@@ -47,10 +48,14 @@ namespace Sample
                 {
                     if (cancellationToken.IsCancellationRequested) break;
 
-                    var messageData = new BusinessMessage { MessageId = i.ToString(), Content = $"我是内容_{i}", CreateTime = DateTime.Now };
-                    await _messageBus.PublishAsync(messageData);
-                    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}生产数据：MessageId={messageData.MessageId}");
-                    //await Task.Delay(TimeSpan.FromSeconds(1));
+                    await With.NoException(_logger, async () =>
+                    {
+                        var messageData = new BusinessMessage { MessageId = i.ToString(), Content = $"我是内容_{i}", CreateTime = DateTime.Now };
+                        await _messageBus.PublishAsync(messageData);
+                        _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}生产数据：MessageId={messageData.MessageId}");
+                        //await Task.Delay(TimeSpan.FromSeconds(1));
+                    }, "生产消息");
+
                 }
             }
             catch (Exception ex)
