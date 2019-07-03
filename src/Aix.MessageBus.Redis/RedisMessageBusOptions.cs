@@ -7,6 +7,8 @@ namespace Aix.MessageBus.Redis
 {
     public class RedisMessageBusOptions
     {
+        private int[] DefaultRetryStrategy = new int[] { 10, 60, 2 * 60, 5 * 60, 10 * 60, 20 * 60, 30 * 60 };
+
         public RedisMessageBusOptions()
         {
             this.TopicPrefix = "redis:";
@@ -14,6 +16,9 @@ namespace Aix.MessageBus.Redis
             this.DefaultConsumerThreadCount = 4;
             this.ConsumerMode = ConsumerMode.AtLeastOnce;
             this.NoAckReEnqueueDelay = 30;
+            this.DataExpireDay = 7;
+            this.RetryMaxCount = 5;
+            this.RetryStrategy = DefaultRetryStrategy;
         }
 
         /// <summary>
@@ -50,5 +55,29 @@ namespace Aix.MessageBus.Redis
         /// 没有确认重新入队的超时时间 单位：秒，默认30秒
         /// </summary>
         public int NoAckReEnqueueDelay { get; set; }
+
+        /// <summary>
+        /// 任务数据有效期 默认7天 单位  天
+        /// </summary>
+        public int DataExpireDay { get; set; }
+
+        /// <summary>
+        /// 失败重试最大次数 0不重试，默认：5,需要重试请抛出RetryException异常
+        /// </summary>
+        public int RetryMaxCount { get; set; }
+
+        private int[] _retryStrategy;
+        /// <summary>
+        /// 失败重试延迟策略 单位：秒 （第二次以后要大于等于60秒）  默认失败次数对应值延迟时间[ 10, 60, 2 * 60, 5 * 60, 10 * 60, 20 * 60, 30 * 60 ];
+        /// </summary>
+        public int[] RetryStrategy
+        {
+            get
+            {
+                if (_retryStrategy == null || _retryStrategy.Length == 0) _retryStrategy = DefaultRetryStrategy;
+                return _retryStrategy;
+            }
+            set { _retryStrategy = value; }
+        }
     }
 }

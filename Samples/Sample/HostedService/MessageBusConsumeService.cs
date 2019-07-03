@@ -71,7 +71,8 @@ namespace Sample
                 await _messageBus.SubscribeAsync<BusinessMessage>(async (message) =>
                 {
                     var current = Interlocked.Increment(ref Count);
-                    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费2数据：MessageId={message.MessageId},Content={message.Content},count={current}");
+                   // _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费2数据：MessageId={message.MessageId},Content={message.Content},count={current}");
+                    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}——{message.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")}消费2数据：,count={current}");
                     await Task.CompletedTask;
                 }, null, cancellationToken);
             }

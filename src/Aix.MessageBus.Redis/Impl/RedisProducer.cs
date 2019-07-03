@@ -38,11 +38,11 @@ namespace Aix.MessageBus.Redis.Impl
         public Task<bool> ProduceAsync(string topic, JobData jobData)
         {
             var values = jobData.ToDictionary();
-            var hashJobId = GetJobHashId(jobData.JobId);
+            var hashJobId = Helper.GetJobHashId(_options,jobData.JobId);
 
             var trans = _database.CreateTransaction();
             trans.HashSetAsync(hashJobId, values.ToArray());
-            trans.KeyExpireAsync(hashJobId, TimeSpan.FromDays(7));
+            trans.KeyExpireAsync(hashJobId, TimeSpan.FromDays(_options.DataExpireDay));
             trans.ListLeftPushAsync(topic, jobData.JobId);
 
             return With.ReTry<bool>(this._logger, () =>
@@ -52,11 +52,20 @@ namespace Aix.MessageBus.Redis.Impl
 
         }
 
-        private string GetJobHashId(string jobId)
+        public Task<bool> ProduceAsync(string topic, JobData jobData, TimeSpan delay)
         {
-            //return GetRedisKey("jobdata" + $":job:{jobId}");
+            var values = jobData.ToDictionary();
+            var hashJobId = Helper.GetJobHashId(_options, jobData.JobId);
 
-            return $"{_options.TopicPrefix ?? ""}jobdata:{jobId}";
+            var trans = _database.CreateTransaction();
+            trans.HashSetAsync(hashJobId, values.ToArray());
+            trans.KeyExpireAsync(hashJobId, TimeSpan.FromDays(_options.DataExpireDay));
+            trans.SortedSetAddAsync(Helper.GetDelaySortedSetName(_options), jobData.JobId, DateUtils.GetTimeStamp(DateTime.Now.AddMilliseconds(delay.TotalMilliseconds))); //当前时间戳，
+
+            return With.ReTry<bool>(this._logger, () =>
+            {
+                return trans.ExecuteAsync();
+            }, "redismessagebus ProduceAsync");
         }
     }
 }

@@ -9,5 +9,7 @@ namespace Aix.MessageBus.Redis
     public interface IRedisProducer : IDisposable
     {
         Task<bool> ProduceAsync(string topic, JobData jobData);
+
+        Task<bool> ProduceAsync(string topic, JobData jobData,TimeSpan delay);
     }
 }

@@ -175,6 +175,15 @@ namespace Aix.MessageBus.Utils
             return (long)ts.TotalMilliseconds;
         }
 
+        public static long GetTimeStamp(DateTime date)
+        {
+            DateTime theDate = date;
+            DateTime d1 = new DateTime(1970, 1, 1);
+            DateTime d2 = theDate.ToUniversalTime();
+            TimeSpan ts = new TimeSpan(d2.Ticks - d1.Ticks);
+            return (long)ts.TotalMilliseconds;
+        }
+
         public static long GetTimeStampForSecond()
         {
             DateTime theDate = DateTime.Now;
