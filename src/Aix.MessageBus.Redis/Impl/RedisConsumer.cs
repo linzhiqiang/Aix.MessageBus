@@ -22,6 +22,7 @@ namespace Aix.MessageBus.Redis.Impl
         ConnectionMultiplexer _connectionMultiplexer;
         IDatabase _database;
         DistributedLock _distributedLock;
+        RedisStorage _redisStorage;
 
         TimeSpan _noAckReEnqueueDelay = TimeSpan.FromSeconds(30);
 
@@ -35,6 +36,7 @@ namespace Aix.MessageBus.Redis.Impl
             _connectionMultiplexer = serviceProvider.GetService<ConnectionMultiplexer>();
             _database = _connectionMultiplexer.GetDatabase();
             _distributedLock = new DistributedLock(_connectionMultiplexer);
+            _redisStorage = serviceProvider.GetService<RedisStorage>();
             _noAckReEnqueueDelay = TimeSpan.FromSeconds(_options.NoAckReEnqueueDelay);
         }
 
@@ -91,7 +93,6 @@ namespace Aix.MessageBus.Redis.Impl
 
                          end = 0 - ((length - deleteCount) + 1);
                          start = end - PerBatchSize + 1;
-
                      }
                      while (length > 0);
 
@@ -116,7 +117,7 @@ namespace Aix.MessageBus.Redis.Impl
                 {//准备执行了，但是没有收到确认（执行失败或者没执行）
                     if (DateTime.Now - executeTime.Value > _noAckReEnqueueDelay)
                     {
-                        await ReEnquene(topic, jobId);
+                        await _redisStorage.ReEnquene(topic, jobId);
                         deleteCount++;
                     }
                 }
@@ -125,11 +126,11 @@ namespace Aix.MessageBus.Redis.Impl
                     var createTime = DateUtils.ToDateTimeNullable(await _database.HashGetAsync(Helper.GetJobHashId(_options, jobId), "CreateTime"));
                     if (createTime.HasValue && DateTime.Now - createTime.Value > _noAckReEnqueueDelay)
                     {
-                        await Task.Delay(100);
+                        await Task.Delay(50);
                         executeTime = DateUtils.ToDateTimeNullable(await _database.HashGetAsync(Helper.GetJobHashId(_options, jobId), "ExecuteTime"));
                         if (executeTime == null)
                         {
-                            await ReEnquene(topic, jobId);
+                            await _redisStorage.ReEnquene(topic, jobId);
                             deleteCount++;
                         }
                     }
@@ -138,22 +139,6 @@ namespace Aix.MessageBus.Redis.Impl
             }
 
             return deleteCount;
-        }
-
-        /// <summary>
-        /// 重新入队
-        /// </summary>
-        /// <param name="topic"></param>
-        /// <param name="jobId"></param>
-        /// <returns></returns>
-        private Task ReEnquene(string topic, string jobId)
-        {
-            var trans = _database.CreateTransaction();
-
-            trans.ListRemoveAsync(Helper.GetProcessingQueueName(topic), jobId);
-            trans.ListLeftPushAsync(topic, jobId);
-
-            return trans.ExecuteAsync();
         }
 
         private Task StartPoll(string topic, CancellationToken cancellationToken)
@@ -199,7 +184,8 @@ namespace Aix.MessageBus.Redis.Impl
             string jobId = await _database.ListRightPopLeftPushAsync(topic, processingQueue);//加入备份队列，执行完进行移除
             if (string.IsNullOrEmpty(jobId))
             {
-                await Task.Delay(TimeSpan.FromSeconds(1));
+                //await Task.Delay(TimeSpan.FromSeconds(1));
+                _redisStorage.WaitForJob(TimeSpan.FromSeconds(10), default(CancellationToken));
                 return;
             }
             await _database.HashSetAsync(Helper.GetJobHashId(_options, jobId), new HashEntry[] {
@@ -211,6 +197,8 @@ namespace Aix.MessageBus.Redis.Impl
             //var obj = _options.Serializer.Deserialize<T>(data);
 
             await OnMessage(data);
+            
+            //需要重试 这里加入延迟任务
 
             await CommitACK(topic, jobId);
         }
@@ -226,7 +214,8 @@ namespace Aix.MessageBus.Redis.Impl
             string jobId = await _database.ListRightPopAsync(topic);
             if (string.IsNullOrEmpty(jobId))
             {
-                await Task.Delay(TimeSpan.FromSeconds(1));
+                //await Task.Delay(TimeSpan.FromSeconds(1));
+                _redisStorage.WaitForJob(TimeSpan.FromSeconds(10), default(CancellationToken));
                 return;
             }
             var hashId = Helper.GetJobHashId(_options, jobId);
@@ -255,6 +244,8 @@ namespace Aix.MessageBus.Redis.Impl
                 return trans.ExecuteAsync();
             }, "redismessagebus CommitACK");
         }
+
+
 
         public void Close()
         {

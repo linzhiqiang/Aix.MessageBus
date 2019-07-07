@@ -15,8 +15,6 @@ namespace Aix.MessageBus.Redis.Foundation
         private RedisMessageBusOptions _options;
 
         ConnectionMultiplexer _connectionMultiplexer;
-
-
         private readonly ManualResetEvent _mre = new ManualResetEvent(false);
         private readonly ISubscriber _subscriber;
 
@@ -29,6 +27,7 @@ namespace Aix.MessageBus.Redis.Foundation
             _connectionMultiplexer = _serviceProvider.GetService<ConnectionMultiplexer>();
 
             _subscriber = _connectionMultiplexer.GetSubscriber();
+            Channel = subscriberChannel;
             _subscriber.Subscribe(Channel, (channel, value) =>
             {
                 _mre.Set();

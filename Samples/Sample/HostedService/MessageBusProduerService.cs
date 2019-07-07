@@ -29,7 +29,7 @@ namespace Sample
             Task.Run(() =>
            {
                return ProducerDelay(cancellationToken);
-               //return Producer(cancellationToken);
+              // return Producer(cancellationToken);
            });
 
             return Task.CompletedTask;
@@ -78,10 +78,10 @@ namespace Sample
 
                     await With.NoException(_logger, async () =>
                     {
-                        var delay = TimeSpan.FromSeconds(13);
+                        var delay = TimeSpan.FromSeconds(2);
                         var delayDatetime = DateTime.Now.Add(delay);
                         var messageData = new BusinessMessage { MessageId = i.ToString(), Content = $"我是内容_{i}", CreateTime = delayDatetime };
-                        await messagebus.PublishAsync(typeof(BusinessMessage),messageData,TimeSpan.FromSeconds(6));
+                        await messagebus.PublishAsync(typeof(BusinessMessage),messageData, delay);
                         _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}——{delayDatetime.ToString("yyyy-MM-dd HH:mm:ss")}生产数据：MessageId={messageData.MessageId}");
                         //await Task.Delay(TimeSpan.FromSeconds(1));
                     }, "生产消息");

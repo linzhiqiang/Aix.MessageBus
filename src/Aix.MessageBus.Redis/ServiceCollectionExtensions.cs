@@ -4,6 +4,7 @@ using System;
 using System.Linq;
 using System.Collections.Generic;
 using System.Text;
+using Aix.MessageBus.Redis.Impl;
 
 namespace Aix.MessageBus.Redis
 {
@@ -53,7 +54,7 @@ namespace Aix.MessageBus.Redis
             }
 
             services.AddSingleton(options);
-
+            services.AddSingleton<RedisStorage>();
             return services;
         }
     }

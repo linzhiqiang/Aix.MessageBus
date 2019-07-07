@@ -16,8 +16,7 @@ namespace Aix.MessageBus.Redis.Impl
         private ILogger<RedisProducer> _logger;
         private RedisMessageBusOptions _options;
 
-        ConnectionMultiplexer _connectionMultiplexer;
-        IDatabase _database;
+        RedisStorage _redisStorage;
 
         public RedisProducer(IServiceProvider serviceProvider)
         {
@@ -26,8 +25,7 @@ namespace Aix.MessageBus.Redis.Impl
             _logger = _serviceProvider.GetService<ILogger<RedisProducer>>();
             _options = _serviceProvider.GetService<RedisMessageBusOptions>();
 
-            _connectionMultiplexer = _serviceProvider.GetService<ConnectionMultiplexer>();
-            _database = _connectionMultiplexer.GetDatabase();
+            _redisStorage = _serviceProvider.GetService<RedisStorage>();
         }
 
         public void Dispose()
@@ -37,35 +35,13 @@ namespace Aix.MessageBus.Redis.Impl
 
         public Task<bool> ProduceAsync(string topic, JobData jobData)
         {
-            var values = jobData.ToDictionary();
-            var hashJobId = Helper.GetJobHashId(_options,jobData.JobId);
-
-            var trans = _database.CreateTransaction();
-            trans.HashSetAsync(hashJobId, values.ToArray());
-            trans.KeyExpireAsync(hashJobId, TimeSpan.FromDays(_options.DataExpireDay));
-            trans.ListLeftPushAsync(topic, jobData.JobId);
-
-            return With.ReTry<bool>(this._logger, () =>
-            {
-                return trans.ExecuteAsync();
-            }, "redismessagebus ProduceAsync");
+            return _redisStorage.Enquene(topic, jobData);
 
         }
 
         public Task<bool> ProduceAsync(string topic, JobData jobData, TimeSpan delay)
         {
-            var values = jobData.ToDictionary();
-            var hashJobId = Helper.GetJobHashId(_options, jobData.JobId);
-
-            var trans = _database.CreateTransaction();
-            trans.HashSetAsync(hashJobId, values.ToArray());
-            trans.KeyExpireAsync(hashJobId, TimeSpan.FromDays(_options.DataExpireDay));
-            trans.SortedSetAddAsync(Helper.GetDelaySortedSetName(_options), jobData.JobId, DateUtils.GetTimeStamp(DateTime.Now.AddMilliseconds(delay.TotalMilliseconds))); //当前时间戳，
-
-            return With.ReTry<bool>(this._logger, () =>
-            {
-                return trans.ExecuteAsync();
-            }, "redismessagebus ProduceAsync");
+            return _redisStorage.EnqueneDelay(topic, jobData, delay);
         }
     }
 }
