@@ -38,6 +38,11 @@ namespace Aix.MessageBus.Kafka
             await _producer.ProduceAsync(GetTopic(messageType), new Message<Null, MessageBusData> { Value = data });
         }
 
+        public async Task PublishAsync(Type messageType, object message, TimeSpan delay)
+        {
+            await Task.Delay(delay);
+            await this.PublishAsync(messageType, message);
+        }
         public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context=null, CancellationToken cancellationToken=default)
         {
             string topic = GetTopic(typeof(T));

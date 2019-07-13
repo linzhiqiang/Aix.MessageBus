@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Aix.MessageBus.Redis2
+namespace Aix.MessageBus.Redis
 {
     internal static class Helper
     {
@@ -12,12 +12,12 @@ namespace Aix.MessageBus.Redis2
         }
         public static string GetJobHashId(RedisMessageBusOptions options, string jobId)
         {
-            return $"{options.TopicPrefix}jobdata:{jobId}";
+            return $"{options.TopicPrefix ?? ""}jobdata:{jobId}";
         }
 
         public static string GetDelaySortedSetName(RedisMessageBusOptions options)
         {
-            return $"{options.TopicPrefix}delay:jobid";
+            return $"{options.TopicPrefix ?? ""}delay:jobid";
         }
 
         public static string GetQueueJobChannel(RedisMessageBusOptions options)

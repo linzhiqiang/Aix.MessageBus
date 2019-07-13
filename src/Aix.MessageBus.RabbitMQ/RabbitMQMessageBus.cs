@@ -41,6 +41,12 @@ namespace Aix.MessageBus.RabbitMQ
             await this._producer.ProduceAsync(topic, data);
         }
 
+        public async Task PublishAsync(Type messageType, object message, TimeSpan delay)
+        {
+            await Task.Delay(delay);
+            await this.PublishAsync(messageType, message);
+        }
+
         public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default)
         {
             var topic = GetTopic(typeof(T));

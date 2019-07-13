@@ -1,12 +1,9 @@
 ﻿using Aix.MessageBus;
-using Aix.MessageBus.Redis2;
+using Aix.MessageBus.Redis;
 using Aix.MessageBus.Utils;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -68,7 +65,6 @@ namespace Sample
 
         private async Task ProducerDelay(CancellationToken cancellationToken)
         {
-            RedisMessageBus messagebus = _messageBus as RedisMessageBus;
             int producerCount = _cmdOptions.Count > 0 ? _cmdOptions.Count : 1;
             try
             {
@@ -78,13 +74,16 @@ namespace Sample
 
                     await With.NoException(_logger, async () =>
                     {
-                        var delay = TimeSpan.FromSeconds(2);
+                        var delay = TimeSpan.FromSeconds(30);
                         var delayDatetime = DateTime.Now.Add(delay);
                         var messageData = new BusinessMessage { MessageId = i.ToString(), Content = $"我是内容_{i}", CreateTime = delayDatetime };
-                        await messagebus.PublishAsync(typeof(BusinessMessage),messageData, delay);
+                        //await _messageBus.PublishAsync(typeof(BusinessMessage),messageData, delay);
+                        await _messageBus.PublishAsync(typeof(BusinessMessage), messageData);
                         _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}——{delayDatetime.ToString("yyyy-MM-dd HH:mm:ss")}生产数据：MessageId={messageData.MessageId}");
                         //await Task.Delay(TimeSpan.FromSeconds(1));
                     }, "生产消息");
+
+                    
 
                 }
             }

@@ -5,18 +5,19 @@ using System.Text;
 
 namespace Aix.MessageBus.Redis
 {
-  public  class RedisMessageBusOptions
+    public class RedisMessageBusOptions
     {
         private int[] DefaultRetryStrategy = new int[] { 10, 60, 2 * 60, 5 * 60, 10 * 60, 20 * 60, 30 * 60 };
+
         public RedisMessageBusOptions()
         {
-            this.TopicPrefix = "redis:messagebus:";
+            this.TopicPrefix = "redis:";
             this.Serializer = new MessagePackSerializer();
+            this.DefaultConsumerThreadCount = 4;
+            this.ConsumerMode = ConsumerMode.AtLeastOnce;
+            this.NoAckReEnqueueDelay = 30;
             this.DataExpireDay = 7;
-            this.DefaultConsumerThreadCount = 2;
-            this.ErrorReEnqueueIntervalSecond = 30;
-            this.ExecuteTimeoutSecond = 60;
-            this.MaxErrorReTryCount = 5;
+            this.RetryMaxCount = 5;
             this.RetryStrategy = DefaultRetryStrategy;
         }
 
@@ -41,29 +42,29 @@ namespace Aix.MessageBus.Redis
         public ISerializer Serializer { get; set; }
 
         /// <summary>
+        /// 默认每个类型的消费线程数 默认4个
+        /// </summary>
+        public int DefaultConsumerThreadCount { get; set; }
+
+        /// <summary>
+        /// 消费模式 语义 默认至少一次
+        /// </summary>
+        public ConsumerMode ConsumerMode { get; set; }
+
+        /// <summary>
+        /// 没有确认重新入队的超时时间 单位：秒，默认30秒
+        /// </summary>
+        public int NoAckReEnqueueDelay { get; set; }
+
+        /// <summary>
         /// 任务数据有效期 默认7天 单位  天
         /// </summary>
         public int DataExpireDay { get; set; }
 
         /// <summary>
-        /// 默认每个类型的消费线程数 默认2个
+        /// 失败重试最大次数 0不重试，默认：5,需要重试请抛出RetryException异常
         /// </summary>
-        public int DefaultConsumerThreadCount { get; set; }
-
-        /// <summary>
-        /// 错误数据重新入队  线程执行间隔
-        /// </summary>
-        public int ErrorReEnqueueIntervalSecond { get; set; }
-
-        /// <summary>
-        /// 执行超时时间，超过该时间，任务执行错误尝试重试
-        /// </summary>
-        public int ExecuteTimeoutSecond { get; set; }
-
-        /// <summary>
-        /// 最大错误重试次数 默认5次
-        /// </summary>
-        public int MaxErrorReTryCount { get; set; }
+        public int RetryMaxCount { get; set; }
 
         private int[] _retryStrategy;
         /// <summary>

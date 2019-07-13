@@ -12,12 +12,12 @@ namespace Aix.MessageBus.Redis
         }
         public static string GetJobHashId(RedisMessageBusOptions options, string jobId)
         {
-            return $"{options.TopicPrefix ?? ""}jobdata:{jobId}";
+            return $"{options.TopicPrefix}jobdata:{jobId}";
         }
 
         public static string GetDelaySortedSetName(RedisMessageBusOptions options)
         {
-            return $"{options.TopicPrefix ?? ""}delay:jobid";
+            return $"{options.TopicPrefix}delay:jobid";
         }
 
         public static string GetQueueJobChannel(RedisMessageBusOptions options)
@@ -25,9 +25,9 @@ namespace Aix.MessageBus.Redis
             return $"{options.TopicPrefix}QueueJobChannel";
         }
 
-        public static string GetDelayChannel(RedisMessageBusOptions options)
+        public static string GetErrorChannel(RedisMessageBusOptions options)
         {
-            return $"{options.TopicPrefix}DelayJobChannel";
+            return $"{options.TopicPrefix}ErrorJobChannel";
         }
     }
 }

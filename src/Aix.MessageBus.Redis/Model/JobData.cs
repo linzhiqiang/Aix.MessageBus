@@ -17,7 +17,7 @@ namespace Aix.MessageBus.Redis.Model
             };
         }
 
-        private JobData()
+        public JobData()
         {
             JobId = Guid.NewGuid().ToString().Replace("-", "");
         }
@@ -44,6 +44,8 @@ namespace Aix.MessageBus.Redis.Model
 
         public string Topic { get; set; }
 
+        public DateTime? CheckedTime { get; set; }
+
         public List<HashEntry> ToDictionary()
         {
             var result = new List<HashEntry>
@@ -54,7 +56,8 @@ namespace Aix.MessageBus.Redis.Model
                 new HashEntry("Data",Data),
                 new HashEntry("Status",Status),
                 new HashEntry("ErrorCount",ErrorCount),
-                new HashEntry("Topic",Topic)
+                new HashEntry("Topic",Topic),
+                new HashEntry("CheckedTime", TimeToString(CheckedTime))
             };
 
             return result;

@@ -37,6 +37,15 @@ namespace Aix.MessageBus
         Task PublishAsync(Type messageType, object message);
 
         /// <summary>
+        /// 发布延迟消息
+        /// </summary>
+        /// <param name="messageType"></param>
+        /// <param name="message"></param>
+        /// <param name="delay"></param>
+        /// <returns></returns>
+        Task PublishAsync(Type messageType, object message,TimeSpan delay);
+
+        /// <summary>
         /// 订阅消息 
         /// </summary>
         /// <typeparam name="T"></typeparam>

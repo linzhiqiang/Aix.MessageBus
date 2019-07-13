@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Aix.MessageBus.Redis2.BackgroundProcess
+namespace Aix.MessageBus.Redis.BackgroundProcess
 {
     public class ProcessExecuter
     {
@@ -24,8 +24,9 @@ namespace Aix.MessageBus.Redis2.BackgroundProcess
             _backgroundProcessContext = backgroundProcessContext;
         }
 
-        public Task AddProcess(IBackgroundProcess backgroundProcess)
+        public Task AddProcess(IBackgroundProcess backgroundProcess,string name)
         {
+            _logger.LogInformation($"开启后台任务：{name}");
             _backgroundProcesses.Add(backgroundProcess);
 
             Task.Factory.StartNew(() => RunProcess(backgroundProcess), TaskCreationOptions.LongRunning);
@@ -35,6 +36,10 @@ namespace Aix.MessageBus.Redis2.BackgroundProcess
         public Task Close()
         {
             this._isStart = false;
+            foreach (var item in _backgroundProcesses)
+            {
+                item.Dispose();
+            }
             return Task.CompletedTask;
         }
 

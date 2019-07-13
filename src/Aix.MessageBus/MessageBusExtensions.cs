@@ -11,5 +11,10 @@ namespace Aix.MessageBus
         {
             return messageBus.PublishAsync(typeof(T), message);
         }
+
+        public static Task PublishAsync<T>(this IMessageBus messageBus, T message,TimeSpan delay)
+        {
+            return messageBus.PublishAsync(typeof(T), message, delay);
+        }
     }
 }

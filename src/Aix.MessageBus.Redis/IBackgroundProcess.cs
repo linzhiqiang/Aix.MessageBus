@@ -3,9 +3,9 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Aix.MessageBus.Redis2
+namespace Aix.MessageBus.Redis
 {
-    public interface IBackgroundProcess
+    public interface IBackgroundProcess:IDisposable
     {
         Task Execute(BackgroundProcessContext context);
     }

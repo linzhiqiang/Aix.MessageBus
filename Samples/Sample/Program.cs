@@ -1,18 +1,14 @@
 ﻿using Aix.MessageBus;
 using Aix.MessageBus.Kafka;
 using Aix.MessageBus.RabbitMQ;
-using Aix.MessageBus.Redis2;
-using Aix.MessageBus.Utils;
+using Aix.MessageBus.Redis;
 using CommandLine;
 using Confluent.Kafka;
-using MessagePack.Resolvers;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Sample
@@ -75,6 +71,7 @@ namespace Sample
                             break;
                         case 2:
                             var redisMessageBusOptions = context.Configuration.GetSection("redis-messagebus").Get<RedisMessageBusOptions>();
+                            redisMessageBusOptions.RetryStrategy = new int[] { 1,1,1,1,1,1,1};
                             services.AddRedisMessageBus(redisMessageBusOptions); //list实现
                             //services.AddRedisMessageBusPubSub(redisMessageBusOptions);//发布订阅实现
                             break;

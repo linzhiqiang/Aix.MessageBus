@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -32,11 +33,17 @@ namespace Aix.MessageBus.Redis
             return _subscriber.PublishAsync(GetTopic(messageType), _options.Serializer.Serialize(data));
         }
 
+        public async Task PublishAsync(Type messageType, object message, TimeSpan delay)
+        {
+            await Task.Delay(delay);
+            await this.PublishAsync(messageType, message);
+        }
+
         public Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context, CancellationToken cancellationToken = default)
         {
             return _subscriber.SubscribeAsync(GetTopic(typeof(T)), (channel, value) =>
             {
-              var task=  With.NoException(_logger, async () =>
+                var task = With.NoException(_logger, async () =>
                 {
                     var messageBusData = _options.Serializer.Deserialize<MessageBusData>(value);
                     var obj = _options.Serializer.Deserialize<T>(messageBusData.Data);

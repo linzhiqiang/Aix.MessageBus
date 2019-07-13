@@ -49,6 +49,12 @@ namespace Aix.MessageBus
             return Task.CompletedTask;
         }
 
+       public async Task PublishAsync(Type messageType, object message, TimeSpan delay)
+        {
+            await Task.Delay(delay);
+            await this.PublishAsync(messageType,message);
+        }
+
         public Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context=null, CancellationToken cancellationToken=default)
         {
             string handlerKey = GetHandlerKey(typeof(T));

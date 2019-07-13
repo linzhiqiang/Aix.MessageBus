@@ -3,7 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Aix.MessageBus.Redis2.Model
+namespace Aix.MessageBus.Redis.Model
 {
     public class JobData
     {

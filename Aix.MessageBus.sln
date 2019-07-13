@@ -9,13 +9,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aix.MessageBus", "src\Aix.M
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aix.MessageBus.Kafka", "src\Aix.MessageBus.Kafka\Aix.MessageBus.Kafka.csproj", "{10DCDBDC-F624-4D65-AA87-C929D895B33A}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aix.MessageBus.Redis", "src\Aix.MessageBus.Redis\Aix.MessageBus.Redis.csproj", "{2B62886C-B1E8-4A30-8980-6F71D4155957}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aix.MessageBus.RabbitMQ", "src\Aix.MessageBus.RabbitMQ\Aix.MessageBus.RabbitMQ.csproj", "{981BDFEB-E119-4AAA-B1E9-7DB32C7E63B9}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Sample", "Samples\Sample\Sample.csproj", "{742EC74D-5D17-4BCF-86B3-01B1451DE35B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aix.MessageBus.Redis2", "src\Aix.MessageBus.Redis2\Aix.MessageBus.Redis2.csproj", "{023510FF-FB86-4F3A-972B-BFDB9128AB16}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aix.MessageBus.Redis", "src\Aix.MessageBus.Redis\Aix.MessageBus.Redis.csproj", "{0DCA9212-E7A9-4784-8B48-AE095DEB53AA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -31,10 +29,6 @@ Global
 		{10DCDBDC-F624-4D65-AA87-C929D895B33A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{10DCDBDC-F624-4D65-AA87-C929D895B33A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{10DCDBDC-F624-4D65-AA87-C929D895B33A}.Release|Any CPU.Build.0 = Release|Any CPU
-		{2B62886C-B1E8-4A30-8980-6F71D4155957}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2B62886C-B1E8-4A30-8980-6F71D4155957}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2B62886C-B1E8-4A30-8980-6F71D4155957}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2B62886C-B1E8-4A30-8980-6F71D4155957}.Release|Any CPU.Build.0 = Release|Any CPU
 		{981BDFEB-E119-4AAA-B1E9-7DB32C7E63B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{981BDFEB-E119-4AAA-B1E9-7DB32C7E63B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{981BDFEB-E119-4AAA-B1E9-7DB32C7E63B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -43,10 +37,10 @@ Global
 		{742EC74D-5D17-4BCF-86B3-01B1451DE35B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{742EC74D-5D17-4BCF-86B3-01B1451DE35B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{742EC74D-5D17-4BCF-86B3-01B1451DE35B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{023510FF-FB86-4F3A-972B-BFDB9128AB16}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{023510FF-FB86-4F3A-972B-BFDB9128AB16}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{023510FF-FB86-4F3A-972B-BFDB9128AB16}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{023510FF-FB86-4F3A-972B-BFDB9128AB16}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0DCA9212-E7A9-4784-8B48-AE095DEB53AA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0DCA9212-E7A9-4784-8B48-AE095DEB53AA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0DCA9212-E7A9-4784-8B48-AE095DEB53AA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0DCA9212-E7A9-4784-8B48-AE095DEB53AA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
