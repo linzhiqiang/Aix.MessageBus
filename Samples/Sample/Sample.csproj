@@ -16,7 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Aix.MessageBus.Kafka\Aix.MessageBus.Kafka.csproj" />
     <ProjectReference Include="..\..\src\Aix.MessageBus.RabbitMQ\Aix.MessageBus.RabbitMQ.csproj" />
-    <ProjectReference Include="..\..\src\Aix.MessageBus.Redis\Aix.MessageBus.Redis.csproj" />
+    <ProjectReference Include="..\..\src\Aix.MessageBus.Redis2\Aix.MessageBus.Redis2.csproj" />
     <ProjectReference Include="..\..\src\Aix.MessageBus\Aix.MessageBus.csproj" />
   </ItemGroup>
 

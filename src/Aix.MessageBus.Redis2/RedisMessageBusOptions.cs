@@ -1,0 +1,49 @@
+﻿using StackExchange.Redis;
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace Aix.MessageBus.Redis2
+{
+  public  class RedisMessageBusOptions
+    {
+        public RedisMessageBusOptions()
+        {
+            this.TopicPrefix = "redis:";
+            this.Serializer = new MessagePackSerializer();
+            this.DataExpireDay = 7;
+            this.DefaultConsumerThreadCount = 2;
+
+        }
+
+        /// <summary>
+        /// RedisConnectionString和ConnectionMultiplexer传一个即可
+        /// </summary>
+        public string ConnectionString { get; set; }
+
+        /// <summary>
+        ///  RedisConnectionString和ConnectionMultiplexer传一个即可
+        /// </summary>
+        public ConnectionMultiplexer ConnectionMultiplexer { get; set; }
+
+        /// <summary>
+        /// topic前缀，为了防止重复，建议用项目名称
+        /// </summary>
+        public string TopicPrefix { get; set; }
+
+        /// <summary>
+        /// 自定义序列化，默认为MessagePack
+        /// </summary>
+        public ISerializer Serializer { get; set; }
+
+        /// <summary>
+        /// 任务数据有效期 默认7天 单位  天
+        /// </summary>
+        public int DataExpireDay { get; set; }
+
+        /// <summary>
+        /// 默认每个类型的消费线程数 默认2个
+        /// </summary>
+        public int DefaultConsumerThreadCount { get; set; }
+    }
+}

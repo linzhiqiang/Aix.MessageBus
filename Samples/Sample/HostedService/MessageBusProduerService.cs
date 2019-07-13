@@ -1,5 +1,5 @@
 ﻿using Aix.MessageBus;
-using Aix.MessageBus.Redis;
+using Aix.MessageBus.Redis2;
 using Aix.MessageBus.Utils;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;

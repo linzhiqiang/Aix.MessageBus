@@ -124,6 +124,45 @@ namespace Aix.MessageBus.Redis.Impl
         }
 
         /// <summary>
+        /// 及时任务执行成功
+        /// </summary>
+        /// <param name="topic"></param>
+        /// <param name="jobId"></param>
+        /// <returns></returns>
+        public Task SetSuccess(string topic, string jobId)
+        {
+            var trans = _database.CreateTransaction();
+            trans.ListRemoveAsync(Helper.GetProcessingQueueName(topic), jobId);
+            trans.KeyDeleteAsync(Helper.GetJobHashId(_options, jobId));
+
+            return With.ReTry(_logger, () =>
+            {
+                return trans.ExecuteAsync();
+            }, "redismessagebus CommitACK");
+        }
+
+        /// <summary>
+        /// 及时任务设置失败
+        /// </summary>
+        /// <param name="topic"></param>
+        /// <param name="jobId"></param>
+        /// <returns></returns>
+        public Task SetFail(string topic, string jobId)
+        {
+            var trans = _database.CreateTransaction();
+            trans.HashIncrementAsync(Helper.GetJobHashId(_options, jobId), nameof(JobData.ErrorCount), 1);
+            trans.HashSetAsync(Helper.GetJobHashId(_options, jobId), new HashEntry[] {
+                     new HashEntry(nameof(JobData.Status),9) //0 待执行，1 执行中，2 成功，9 失败
+             });
+            return With.ReTry(_logger, () =>
+            {
+                return trans.ExecuteAsync();
+            }, "redismessagebus SetFail");
+        }
+
+
+
+        /// <summary>
         /// 及时任务 重新入队
         /// </summary>
         /// <param name="topic"></param>
@@ -139,6 +178,20 @@ namespace Aix.MessageBus.Redis.Impl
 
             return trans.ExecuteAsync();
         }
+
+        public Task ErrorReEnqueneDelay(string topic, string jobId,TimeSpan delay)
+        {
+            var trans = _database.CreateTransaction();
+
+            trans.ListRemoveAsync(Helper.GetProcessingQueueName(topic), jobId);
+            trans.SortedSetAddAsync(Helper.GetDelaySortedSetName(_options), jobId, DateUtils.GetTimeStamp(DateTime.Now.AddMilliseconds(delay.TotalMilliseconds))); //当前时间戳，
+
+            trans.PublishAsync(_delayJobChannelSubscription.Channel, jobId);
+
+            return trans.ExecuteAsync();
+        }
+
+
 
         public void WaitForJob(TimeSpan timeSpan, CancellationToken cancellationToken)
         {

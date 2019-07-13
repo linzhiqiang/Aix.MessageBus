@@ -1,7 +1,7 @@
 ﻿using Aix.MessageBus;
 using Aix.MessageBus.Kafka;
 using Aix.MessageBus.RabbitMQ;
-using Aix.MessageBus.Redis;
+using Aix.MessageBus.Redis2;
 using Aix.MessageBus.Utils;
 using CommandLine;
 using Confluent.Kafka;

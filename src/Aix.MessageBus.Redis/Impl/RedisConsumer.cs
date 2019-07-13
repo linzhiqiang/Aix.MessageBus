@@ -40,7 +40,7 @@ namespace Aix.MessageBus.Redis.Impl
             _noAckReEnqueueDelay = TimeSpan.FromSeconds(_options.NoAckReEnqueueDelay);
         }
 
-        public event Func<byte[], Task> OnMessage;
+        public event Func<byte[], Task<bool>> OnMessage;//bool 是否重试
 
         public Task Subscribe(string topic, CancellationToken cancellationToken)
         {
@@ -151,14 +151,8 @@ namespace Aix.MessageBus.Redis.Impl
                     {
                         await With.NoException(_logger, async () =>
                         {
-                            if (_options.ConsumerMode == ConsumerMode.AtMostOnce)
-                            {
-                                await ConsumerAtMostOnce(topic);
-                            }
-                            else
-                            {
-                                await ConsumerAtLeastOnce(topic);
-                            }
+                            await Consumer(topic);
+
                         }, "消费拉取消息系统异常");
                     }
                 }
@@ -173,12 +167,7 @@ namespace Aix.MessageBus.Redis.Impl
             return Task.CompletedTask;
         }
 
-        /// <summary>
-        /// 至少一次
-        /// </summary>
-        /// <param name="topic"></param>
-        /// <returns></returns>
-        private async Task ConsumerAtLeastOnce(string topic)
+        private async Task Consumer(string topic)
         {
             var processingQueue = Helper.GetProcessingQueueName(topic);
             string jobId = await _database.ListRightPopLeftPushAsync(topic, processingQueue);//加入备份队列，执行完进行移除
@@ -189,60 +178,24 @@ namespace Aix.MessageBus.Redis.Impl
                 return;
             }
             await _database.HashSetAsync(Helper.GetJobHashId(_options, jobId), new HashEntry[] {
-                     new HashEntry("ExecuteTime",DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))
+                     new HashEntry("ExecuteTime",DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")),
+                     new HashEntry(nameof(JobData.Status),1) //0 待执行，1 执行中，2 成功，9 失败
              });
 
             byte[] data = await _database.HashGetAsync(Helper.GetJobHashId(_options, jobId), "Data");//取出数据字段
-            if (data == null || data.Length == 0) return;
-            //var obj = _options.Serializer.Deserialize<T>(data);
-
-            await OnMessage(data);
-            
-            //需要重试 这里加入延迟任务
-
-            await CommitACK(topic, jobId);
-        }
-
-        /// <summary>
-        /// 至多一次
-        /// </summary>
-        /// <param name="topic"></param>
-        /// <returns></returns>
-        private async Task ConsumerAtMostOnce(string topic)
-        {
-            var processingQueue = Helper.GetProcessingQueueName(topic);
-            string jobId = await _database.ListRightPopAsync(topic);
-            if (string.IsNullOrEmpty(jobId))
+            var isRetry = false;
+            if (data != null)
             {
-                //await Task.Delay(TimeSpan.FromSeconds(1));
-                _redisStorage.WaitForJob(TimeSpan.FromSeconds(10), default(CancellationToken));
-                return;
+                isRetry = await OnMessage(data);
             }
-            var hashId = Helper.GetJobHashId(_options, jobId);
-            byte[] data = await _database.HashGetAsync(hashId, "Data");//取出数据字段
-            if (data == null || data.Length == 0) return;
-            //var obj = _options.Serializer.Deserialize<T>(data);
-
-            await OnMessage(data);
-            await _database.KeyDeleteAsync(Helper.GetJobHashId(_options, jobId));
-        }
-
-        /// <summary>
-        /// 手动移除备份队列数据
-        /// </summary>
-        /// <param name="topic"></param>
-        /// <param name="jobId"></param>
-        /// <returns></returns>
-        private Task CommitACK(string topic, string jobId)
-        {
-            var trans = _database.CreateTransaction();
-            trans.ListRemoveAsync(Helper.GetProcessingQueueName(topic), jobId);
-            trans.KeyDeleteAsync(Helper.GetJobHashId(_options, jobId));
-
-            return With.ReTry(_logger, () =>
+            if (isRetry)
             {
-                return trans.ExecuteAsync();
-            }, "redismessagebus CommitACK");
+                await _redisStorage.SetFail(topic, jobId);
+            }
+            else
+            {
+                await _redisStorage.SetSuccess(topic, jobId);
+            }
         }
 
 
