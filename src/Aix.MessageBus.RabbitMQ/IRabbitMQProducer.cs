@@ -7,6 +7,8 @@ namespace Aix.MessageBus.RabbitMQ
 {
     public interface IRabbitMQProducer : IDisposable
     {
-        Task<bool> ProduceAsync(string topic, byte[] data);
+        bool ProduceAsync(string topic, byte[] data);
+
+        bool ProduceAsync(string topic, byte[] data,TimeSpan delay);
     }
 }

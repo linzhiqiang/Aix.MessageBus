@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 
 namespace Aix.MessageBus.RabbitMQ
 {
@@ -26,5 +27,58 @@ namespace Aix.MessageBus.RabbitMQ
         {
             return $"{topic}-routingkey";
         }
+
+        #region delay
+
+        public static string GeteDelayExchangeName(RabbitMQMessageBusOptions options)
+        {
+            return $"{options.TopicPrefix }delay-exchange";
+        }
+
+        public static string GetDelayConsumerExchange(RabbitMQMessageBusOptions options)
+        {
+            return $"{options.TopicPrefix }delay-consumer-exchange";
+        }
+
+        public static string GetDelayConsumerQueue(RabbitMQMessageBusOptions options)
+        {
+            return $"{options.TopicPrefix }delay-consumer-queue";
+        }
+
+        public static List<string> GetDelayTopicList(RabbitMQMessageBusOptions options)
+        {
+            List<string> delayTopics = new List<string>();
+            foreach (var item in options.DelayQueueConfig)
+            {
+                var temp= GetDelayTopic(options, item.Value);
+                delayTopics.Add(temp);
+            }
+
+            return delayTopics;
+        }
+        public static string GetDelayTopic(RabbitMQMessageBusOptions options, TimeSpan delay)
+        {
+            var dealySecond = (int)delay.TotalSeconds;
+
+            var keys = options.DelayQueueConfig.Keys.ToList();
+
+            for (int i = 0; i < keys.Count; i++)
+            {
+                if (dealySecond > keys[i])
+                {
+                    return GetDelayTopic(options, options.DelayQueueConfig[keys[i]]);
+                }
+            }
+
+            return GetDelayTopic(options, options.DelayQueueConfig[keys[0]]);
+
+        }
+
+        public static string GetDelayTopic(RabbitMQMessageBusOptions options, string postfix)
+        {
+            return $"{options.TopicPrefix }delay-queue{postfix}";
+        }
+
+        #endregion
     }
 }

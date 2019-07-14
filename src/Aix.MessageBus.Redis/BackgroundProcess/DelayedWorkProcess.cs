@@ -20,7 +20,7 @@ namespace Aix.MessageBus.Redis.BackgroundProcess
         private RedisMessageBusOptions _options;
         private RedisStorage _redisStorage;
         int BatchCount = 100; //一次拉取多少条
-        private bool _isStart = true;
+        private volatile bool _isStart = true;
         public DelayedWorkProcess(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;

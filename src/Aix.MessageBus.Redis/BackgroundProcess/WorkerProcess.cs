@@ -18,7 +18,7 @@ namespace Aix.MessageBus.Redis.BackgroundProcess
         private ILogger<WorkerProcess> _logger;
         private RedisStorage _redisStorage;
         private string _topic;
-        //private bool _isStart = true;
+        //private volatile bool _isStart = true;
 
         Func<MessageResult, Task<bool>> _messageHandler;
         public WorkerProcess(IServiceProvider serviceProvider, string topic, Func<MessageResult, Task<bool>> messageHandler)

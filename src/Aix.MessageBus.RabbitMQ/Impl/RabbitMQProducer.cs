@@ -34,7 +34,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             _basicProperties.ContentType = "text/plain";
             _basicProperties.DeliveryMode = 2;
         }
-        public Task<bool> ProduceAsync(string topic, byte[] data)
+        public bool ProduceAsync(string topic, byte[] data)
         {
             var exchange = Helper.GeteExchangeName(topic);
             var routingKey = Helper.GeteRoutingKey(topic);
@@ -49,7 +49,26 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             {
                 isOk = _channel.WaitForConfirms();
             }
-            return Task.FromResult(isOk);
+            return isOk;
+        }
+
+        public bool ProduceAsync(string topic,byte[] data, TimeSpan delay)
+        {
+            var exchange = Helper.GeteDelayExchangeName(_options);
+            var delayTopic = Helper.GetDelayTopic(_options,delay);
+            var routingKey = Helper.GeteRoutingKey(delayTopic);
+
+            _channel.BasicPublish(exchange: exchange,
+                                              routingKey: routingKey,
+                                              basicProperties: _basicProperties,
+                                              body: data);
+
+            var isOk = true;
+            if (_options.ConfirmSelect)
+            {
+                isOk = _channel.WaitForConfirms();
+            }
+            return isOk;
         }
 
         public void Dispose()

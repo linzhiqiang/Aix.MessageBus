@@ -6,6 +6,17 @@ namespace Aix.MessageBus.RabbitMQ
 {
     public class RabbitMQMessageBusOptions
     {
+        /// <summary>
+        /// 默认延迟队列 延迟时间配置  （秒，延迟队列名称后缀）
+        /// </summary>
+        private static Dictionary<int, string> DefaultDelayQueueConfig = new Dictionary<int, string>
+        {
+            { (int)TimeSpan.FromSeconds(5).TotalSeconds,"5s"},
+            { (int)TimeSpan.FromSeconds(30).TotalSeconds,"30s"},
+            { (int)TimeSpan.FromMinutes(1).TotalSeconds,"1m"},
+            { (int)TimeSpan.FromHours(1).TotalSeconds,"1h"},
+            { (int)TimeSpan.FromDays(1).TotalSeconds,"1d"},
+        };
         public RabbitMQMessageBusOptions()
         {
             Port = 5672;
@@ -17,6 +28,8 @@ namespace Aix.MessageBus.RabbitMQ
             this.DefaultConsumerThreadCount = 4;
             this.AutoAck = true;
             this.ManualCommitBatch = 10;
+
+
         }
         public string HostName { get; set; }
 
@@ -59,5 +72,17 @@ namespace Aix.MessageBus.RabbitMQ
         /// AutoAck=false时每多少个消息提交一次 默认10条消息提交一次
         /// </summary>
         public ushort ManualCommitBatch { get; set; }
+
+        private Dictionary<int, string> _delayQueueConfig;
+        public Dictionary<int, string> DelayQueueConfig
+        {
+            get
+            {
+                if (_delayQueueConfig == null || _delayQueueConfig.Count == 0) _delayQueueConfig = DefaultDelayQueueConfig;
+                return _delayQueueConfig;
+            }
+            set { _delayQueueConfig = value; }
+        }
+
     }
 }

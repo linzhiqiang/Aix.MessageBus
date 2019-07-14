@@ -7,6 +7,9 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Aix.MessageBus.Redis.BackgroundProcess
 {
+    /// <summary>
+    /// 循环任务执行器
+    /// </summary>
     public class ProcessExecuter
     {
         private IServiceProvider _serviceProvider;
@@ -14,7 +17,7 @@ namespace Aix.MessageBus.Redis.BackgroundProcess
         BackgroundProcessContext _backgroundProcessContext;
 
         private IList<IBackgroundProcess> _backgroundProcesses = new List<IBackgroundProcess>();
-        private bool _isStart = true;
+        private volatile bool _isStart = true;
 
 
         public ProcessExecuter(IServiceProvider serviceProvider, BackgroundProcessContext backgroundProcessContext)

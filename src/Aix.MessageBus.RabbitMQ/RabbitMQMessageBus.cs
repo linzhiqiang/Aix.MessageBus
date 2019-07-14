@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 using System.Threading;
 using System.Threading.Tasks;
+using Aix.MessageBus.RabbitMQ.Model;
 
 namespace Aix.MessageBus.RabbitMQ
 {
@@ -22,7 +23,9 @@ namespace Aix.MessageBus.RabbitMQ
         IConnection _connection;
         IRabbitMQProducer _producer;
         List<IDisposable> _consumers = new List<IDisposable>();
+        IDelayQueueConsumer _delayQueueConsumer;
         private HashSet<string> Subscribers = new HashSet<string>();
+        private volatile bool _isInitDelayQueue = false;
 
         public RabbitMQMessageBus(IServiceProvider serviceProvider, ILogger<RabbitMQMessageBus> logger, RabbitMQMessageBusOptions options)
         {
@@ -34,21 +37,33 @@ namespace Aix.MessageBus.RabbitMQ
             this._producer = new RabbitMQProducer(this._serviceProvider);
         }
 
-        public async Task PublishAsync(Type messageType, object message)
+        public Task PublishAsync(Type messageType, object message)
         {
             var topic = GetTopic(messageType);
             var data = _options.Serializer.Serialize(message);
-            await this._producer.ProduceAsync(topic, data);
+            this._producer.ProduceAsync(topic, data);
+            return Task.CompletedTask;
         }
 
-        public async Task PublishAsync(Type messageType, object message, TimeSpan delay)
+        public Task PublishAsync(Type messageType, object message, TimeSpan delay)
         {
-            await Task.Delay(delay);
-            await this.PublishAsync(messageType, message);
+            if (delay > TimeSpan.Zero)
+            { //加入延迟队列
+                var topic = GetTopic(messageType);
+                var delayMessage = new DelayMessage { topic = topic, Data = _options.Serializer.Serialize(message), ExecuteTimeStamp = DateUtils.GetTimeStamp(DateTime.Now.Add(delay)) };
+                var data = _options.Serializer.Serialize(delayMessage);
+                this._producer.ProduceAsync(topic, data, delay);
+            }
+            else
+            {
+                this.PublishAsync(messageType, message);
+            }
+            return Task.CompletedTask;
         }
 
         public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default)
         {
+            InitDelayQueue();
             var topic = GetTopic(typeof(T));
 
             context = context ?? new MessageBusContext();
@@ -58,18 +73,22 @@ namespace Aix.MessageBus.RabbitMQ
             var threadCount = !string.IsNullOrEmpty(threadCountStr) ? int.Parse(threadCountStr) : _options.DefaultConsumerThreadCount;
             AssertUtils.IsTrue(threadCount > 0, "消费者线程数必须大于0");
 
-            var key = $"{topic}_{groupId}";
-            AssertUtils.IsTrue(!Subscribers.Contains(key), "该类型重复订阅，如果需要订阅请区分不同的GroupId");
-            Subscribers.Add(key);
+            var key = !string.IsNullOrEmpty(groupId) ? $"{topic}_{groupId}" : topic;
+
+            lock (Subscribers)
+            {
+                AssertUtils.IsTrue(!Subscribers.Contains(key), "该类型重复订阅，如果需要订阅请区分不同的GroupId");
+                Subscribers.Add(key);
+            }
 
             _logger.LogInformation($"订阅[{topic}],threadcount={threadCount}");
             for (int i = 0; i < threadCount; i++)
             {
                 var consumer = new RabbitMQConsumer<T>(this._serviceProvider);
                 _consumers.Add(consumer);
-                consumer.OnMessage += async(obj) =>
+                consumer.OnMessage += async (obj) =>
                {
-                  await handler(obj);
+                   await handler(obj);
                };
                 await consumer.Subscribe(topic, groupId, cancellationToken);
             }
@@ -84,12 +103,29 @@ namespace Aix.MessageBus.RabbitMQ
                 item.Dispose();
             }
 
-            With.NoException(_logger,()=> {
+            _delayQueueConsumer?.Dispose();
+
+            With.NoException(_logger, () =>
+            {
                 _connection.Close();
-            },"关闭rabbitMQ连接");
+            }, "关闭rabbitMQ连接");
         }
 
         #region private
+
+        private void InitDelayQueue()
+        {
+            if (_isInitDelayQueue) return;
+            lock (this)
+            {
+                if (_isInitDelayQueue) return;
+                _isInitDelayQueue = true;
+            }
+
+             _delayQueueConsumer = new DelayQueueConsumer(this._serviceProvider, this._producer);
+            _delayQueueConsumer.Subscribe();
+
+        }
 
         private string GetTopic(Type type)
         {
