@@ -44,7 +44,7 @@ namespace Aix.MessageBus.Redis
             var topic = GetTopic(messageType);
             var jobData = JobData.CreateJobData(topic, _options.Serializer.Serialize(message));
             var result = await _redisStorage.Enqueue(jobData);
-            AssertUtils.IsTrue(result, $"redis生产者失败,topic:{topic}");
+            AssertUtils.IsTrue(result, $"redis生产者数据失败,topic:{topic}");
         }
 
         public async Task PublishAsync(Type messageType, object message, TimeSpan delay)
@@ -52,7 +52,7 @@ namespace Aix.MessageBus.Redis
             var topic = GetTopic(messageType);
             var jobData = JobData.CreateJobData(topic, _options.Serializer.Serialize(message));
             var result = await _redisStorage.EnqueueDealy(jobData, delay);
-            AssertUtils.IsTrue(result, $"redis生产者失败,topic:{topic}");
+            AssertUtils.IsTrue(result, $"redis生产者数据失败,topic:{topic}");
         }
 
         public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default)

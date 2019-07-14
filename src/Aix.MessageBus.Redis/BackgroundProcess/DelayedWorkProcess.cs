@@ -38,14 +38,21 @@ namespace Aix.MessageBus.Redis.BackgroundProcess
         public async Task Execute(BackgroundProcessContext context)
         {
             var lockKey = $"{_options.TopicPrefix}delay:lock";
-            int delay = 1000; //毫秒
+            long delay = 1000; //毫秒
             await _redisStorage.Lock(lockKey, TimeSpan.FromMinutes(1), async () =>
             {
                 var now = DateTime.Now;
-                var list = await _redisStorage.GetTopDueDealyJobId(DateUtils.GetTimeStamp(now), BatchCount);
+                var maxScore = DateUtils.GetTimeStamp(now);
+                var list = await _redisStorage.GetTopDueDealyJobId(maxScore + 1000, BatchCount); //多查询1秒的数据，便于精确控制延迟
                 foreach (var item in list)
                 {
-                    if (_isStart == false) return;
+                    if (_isStart == false) return;//已经关闭了 就直接返回吧
+                    if (item.Value > maxScore)
+                    {
+                        delay = item.Value - maxScore;
+                        break;
+                    }
+
                     var jobId = item.Key;
                     // 延时任务到期加入即时任务队列
                     await _redisStorage.DueDealyJobEnqueue(jobId);
@@ -59,7 +66,8 @@ namespace Aix.MessageBus.Redis.BackgroundProcess
 
             if (delay > 0)
             {
-                await Task.Delay(delay);
+
+                await Task.Delay(Math.Min((int)delay, 1000));
             }
         }
     }

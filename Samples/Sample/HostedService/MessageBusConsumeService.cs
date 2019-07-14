@@ -54,12 +54,12 @@ namespace Sample
                 context.Config.Add("ConsumerThreadCount", "4");//该订阅的消费线程数，若是kafka注意和分区数匹配
                 await _messageBus.SubscribeAsync<BusinessMessage>(async (message) =>
                 {
-                    //await Task.Delay(1000);
+                    
                     var current = Interlocked.Increment(ref Count);
                    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费1数据：MessageId={message.MessageId},Content={message.Content},count={current}");
-                   // throw new RetryException();
+                    //throw new RetryException();
                     await Task.CompletedTask;
-
+                    //await Task.Delay(1000);
                 }, context, cancellationToken);
 
 
@@ -69,13 +69,16 @@ namespace Sample
                 //context2.Config.Add("ConsumerThreadCount", "2");//该订阅的消费线程数，注意和分区数匹配
 
                 //使用默认分组
-                //await _messageBus.SubscribeAsync<BusinessMessage>(async (message) =>
-                //{
-                //    var current = Interlocked.Increment(ref Count);
-                //   // _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费2数据：MessageId={message.MessageId},Content={message.Content},count={current}");
-                //    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}——{message.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")}消费2数据：,count={current}");
-                //    await Task.CompletedTask;
-                //}, null, cancellationToken);
+                await _messageBus.SubscribeAsync<BusinessMessage2>(async (message) =>
+                {
+                  
+                    var current = Interlocked.Increment(ref Count);
+                    // _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费2数据：MessageId={message.MessageId},Content={message.Content},count={current}");
+                    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}——{message.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")}消费2数据：,count={current}");
+                   // await Task.Delay(1000);
+                    // throw new RetryException();
+                    await Task.CompletedTask;
+                }, null, cancellationToken);
             }
             catch (Exception ex)
             {

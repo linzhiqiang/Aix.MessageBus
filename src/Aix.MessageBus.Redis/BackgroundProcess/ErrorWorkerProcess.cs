@@ -89,7 +89,7 @@ namespace Aix.MessageBus.Redis.BackgroundProcess
                     deleteCount++;
                     continue;
                 }
-                if (jobData.ErrorCount >= _options.MaxErrorReTryCount)
+                if (jobData.ErrorCount > _options.MaxErrorReTryCount)
                 {
                     await _redisStorage.RemoveErrorJobId(topic, jobId);
                     deleteCount++;
