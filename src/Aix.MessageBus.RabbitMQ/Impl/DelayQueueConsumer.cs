@@ -13,7 +13,7 @@ using Aix.MessageBus.RabbitMQ.Model;
 
 namespace Aix.MessageBus.RabbitMQ.Impl
 {
-    public class DelayQueueConsumer: IDelayQueueConsumer
+    public class DelayQueueConsumer : IDelayQueueConsumer
     {
         private IServiceProvider _serviceProvider;
         private ILogger<DelayQueueConsumer> _logger;
@@ -28,6 +28,8 @@ namespace Aix.MessageBus.RabbitMQ.Impl
         ulong _currentDeliveryTag = 0; //记录最新的消费tag，便于手工确认
         private int Count = 0;//记录消费记录数，便于手工批量确认
 
+        private int ManualCommitBatch = 1;
+
         public DelayQueueConsumer(IServiceProvider serviceProvider, IRabbitMQProducer producer)
         {
             _serviceProvider = serviceProvider;
@@ -40,6 +42,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             _channel = _connection.CreateModel();
 
             _autoAck = false;// _options.AutoAck;
+            ManualCommitBatch = 1;// _options.ManualCommitBatch;
         }
 
         private void CreateDelayExchangeAndQueue()
@@ -104,7 +107,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             //绑定交换器到队列
             _channel.QueueBind(queue, exchange, routingKey);
 
-            var prefetchCount = _options.ManualCommitBatch;  //最大值：ushort.MaxValue
+            var prefetchCount = (ushort)ManualCommitBatch;// _options.ManualCommitBatch;  //最大值：ushort.MaxValue
             _channel.BasicQos(0, prefetchCount, false); //客户端最多保留这么多条未确认的消息 只有autoack=false 有用
             var consumer = new EventingBasicConsumer(_channel);
             consumer.Received += Received;
@@ -133,19 +136,19 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             }
         }
 
-        private void Handler( byte[] data)
+        private void Handler(byte[] data)
         {
-            var delayMessage = _options.Serializer.Deserialize<DelayMessage>(data);
+            var delayMessage = _options.Serializer.Deserialize<MessageBusData>(data);
 
-            var delayTime =TimeSpan.FromMilliseconds( delayMessage.ExecuteTimeStamp - DateUtils.GetTimeStamp( DateTime.Now));
+            var delayTime = TimeSpan.FromMilliseconds(delayMessage.ExecuteTimeStamp - DateUtils.GetTimeStamp(DateTime.Now));
             if (delayTime > TimeSpan.Zero)
-            {
+            {//继续延迟
                 var delayTopic = Helper.GetDelayTopic(_options, delayTime);
-                _producer.ProduceAsync(delayMessage.topic, data, delayTime);
+                _producer.ProduceDelayAsync(delayMessage.Type, data, delayTime);
             }
             else
-            {
-                _producer.ProduceAsync(delayMessage.topic, delayMessage.Data);
+            {//即时任务
+                _producer.ProduceAsync(delayMessage.Type, data);
             }
         }
 
@@ -171,7 +174,9 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             }
             else //按照批量确认
             {
-                if (Count % _options.ManualCommitBatch == 0)
+                //if (Count % _options.ManualCommitBatch == 0)
+                if (Count % ManualCommitBatch == 0)
+
                 {
                     With.NoException(_logger, () => { _channel.BasicAck(_currentDeliveryTag, true); }, "批量手工确认消息");
                     Count = 0;

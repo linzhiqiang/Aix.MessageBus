@@ -4,7 +4,7 @@ using System.Text;
 
 namespace Aix.MessageBus.RabbitMQ.Model
 {
-  public  class DelayMessage
+  public  class DelayMessage11
     {
         /// <summary>
         /// 类型对应的topic (交换器的名字)

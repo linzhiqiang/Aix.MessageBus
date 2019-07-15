@@ -34,12 +34,14 @@ namespace Aix.MessageBus.Kafka
 
         public async Task PublishAsync(Type messageType, object message)
         {
+            AssertUtils.IsNotNull(message, "消息不能null");
             var data = new MessageBusData { Type = GetHandlerKey(messageType), Data = _kafkaOptions.Serializer.Serialize(message) };
             await _producer.ProduceAsync(GetTopic(messageType), new Message<Null, MessageBusData> { Value = data });
         }
 
-        public async Task PublishAsync(Type messageType, object message, TimeSpan delay)
+        public async Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
         {
+            AssertUtils.IsNotNull(message, "消息不能null");
             await Task.Delay(delay);
             await this.PublishAsync(messageType, message);
         }

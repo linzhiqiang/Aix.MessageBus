@@ -33,7 +33,7 @@ namespace Aix.MessageBus.Redis
             return _subscriber.PublishAsync(GetTopic(messageType), _options.Serializer.Serialize(data));
         }
 
-        public async Task PublishAsync(Type messageType, object message, TimeSpan delay)
+        public async Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
         {
             await Task.Delay(delay);
             await this.PublishAsync(messageType, message);

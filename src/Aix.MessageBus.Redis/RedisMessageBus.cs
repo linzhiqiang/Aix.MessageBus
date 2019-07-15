@@ -41,14 +41,21 @@ namespace Aix.MessageBus.Redis
         }
         public async Task PublishAsync(Type messageType, object message)
         {
+            AssertUtils.IsNotNull(message, "消息不能null");
             var topic = GetTopic(messageType);
             var jobData = JobData.CreateJobData(topic, _options.Serializer.Serialize(message));
             var result = await _redisStorage.Enqueue(jobData);
             AssertUtils.IsTrue(result, $"redis生产者数据失败,topic:{topic}");
         }
 
-        public async Task PublishAsync(Type messageType, object message, TimeSpan delay)
+        public async Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
         {
+            AssertUtils.IsNotNull(message, "消息不能null");
+            if (delay <= TimeSpan.Zero)
+            {
+                await PublishAsync(messageType, message);
+                return;
+            }
             var topic = GetTopic(messageType);
             var jobData = JobData.CreateJobData(topic, _options.Serializer.Serialize(message));
             var result = await _redisStorage.EnqueueDealy(jobData, delay);

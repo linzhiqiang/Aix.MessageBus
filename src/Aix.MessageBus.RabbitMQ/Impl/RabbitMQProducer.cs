@@ -52,8 +52,12 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             return isOk;
         }
 
-        public bool ProduceAsync(string topic,byte[] data, TimeSpan delay)
+        public bool ProduceDelayAsync(string topic,byte[] data, TimeSpan delay)
         {
+            if (delay <= TimeSpan.Zero)
+            {
+                return ProduceAsync(topic, data);
+            }
             var exchange = Helper.GeteDelayExchangeName(_options);
             var delayTopic = Helper.GetDelayTopic(_options,delay);
             var routingKey = Helper.GeteRoutingKey(delayTopic);

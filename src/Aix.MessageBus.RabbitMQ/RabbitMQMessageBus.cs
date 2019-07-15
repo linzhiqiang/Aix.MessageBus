@@ -39,26 +39,28 @@ namespace Aix.MessageBus.RabbitMQ
 
         public Task PublishAsync(Type messageType, object message)
         {
+            AssertUtils.IsNotNull(message, "消息不能null");
             var topic = GetTopic(messageType);
-            var data = _options.Serializer.Serialize(message);
+            var wrapMessage = new MessageBusData { Type = topic, Data = _options.Serializer.Serialize(message), ExecuteTimeStamp = DateUtils.GetTimeStamp(DateTime.Now) };
+            var data = _options.Serializer.Serialize(wrapMessage);
             this._producer.ProduceAsync(topic, data);
             return Task.CompletedTask;
         }
 
-        public Task PublishAsync(Type messageType, object message, TimeSpan delay)
+        public async Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
         {
+            AssertUtils.IsNotNull(message,"消息不能null");
             if (delay > TimeSpan.Zero)
             { //加入延迟队列
                 var topic = GetTopic(messageType);
-                var delayMessage = new DelayMessage { topic = topic, Data = _options.Serializer.Serialize(message), ExecuteTimeStamp = DateUtils.GetTimeStamp(DateTime.Now.Add(delay)) };
-                var data = _options.Serializer.Serialize(delayMessage);
-                this._producer.ProduceAsync(topic, data, delay);
+                var wrapMessage = new MessageBusData { Type = topic, Data = _options.Serializer.Serialize(message), ExecuteTimeStamp = DateUtils.GetTimeStamp(DateTime.Now.Add(delay)) };
+                var data = _options.Serializer.Serialize(wrapMessage);
+                this._producer.ProduceDelayAsync(topic, data, delay);
             }
             else
             {
-                this.PublishAsync(messageType, message);
+                await this.PublishAsync(messageType, message);
             }
-            return Task.CompletedTask;
         }
 
         public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default)
@@ -84,10 +86,11 @@ namespace Aix.MessageBus.RabbitMQ
             _logger.LogInformation($"订阅[{topic}],threadcount={threadCount}");
             for (int i = 0; i < threadCount; i++)
             {
-                var consumer = new RabbitMQConsumer<T>(this._serviceProvider);
+                var consumer = new RabbitMQConsumer(this._serviceProvider, this._producer);
                 _consumers.Add(consumer);
-                consumer.OnMessage += async (obj) =>
+                consumer.OnMessage += async (result) =>
                {
+                   var obj = _options.Serializer.Deserialize<T>(result.Data);
                    await handler(obj);
                };
                 await consumer.Subscribe(topic, groupId, cancellationToken);
@@ -122,7 +125,7 @@ namespace Aix.MessageBus.RabbitMQ
                 _isInitDelayQueue = true;
             }
 
-             _delayQueueConsumer = new DelayQueueConsumer(this._serviceProvider, this._producer);
+            _delayQueueConsumer = new DelayQueueConsumer(this._serviceProvider, this._producer);
             _delayQueueConsumer.Subscribe();
 
         }

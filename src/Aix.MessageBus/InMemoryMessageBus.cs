@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Aix.MessageBus.Utils;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -32,6 +33,7 @@ namespace Aix.MessageBus
 
         public Task PublishAsync(Type messageType, object message)
         {
+            AssertUtils.IsNotNull(message, "消息不能null");
             string handlerKey = GetHandlerKey(messageType);
             if (_subscriberDict.TryGetValue(handlerKey, out List<InMemorySubscriberInfo> list))
             {
@@ -49,8 +51,9 @@ namespace Aix.MessageBus
             return Task.CompletedTask;
         }
 
-       public async Task PublishAsync(Type messageType, object message, TimeSpan delay)
+       public async Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
         {
+            AssertUtils.IsNotNull(message, "消息不能null");
             await Task.Delay(delay);
             await this.PublishAsync(messageType,message);
         }

@@ -6,11 +6,11 @@ using System.Threading.Tasks;
 
 namespace Aix.MessageBus.RabbitMQ
 {
-    public interface IRabbitMQConsumer<T> : IDisposable
+    public interface IRabbitMQConsumer : IDisposable
     {
         Task Subscribe(string topic, string groupId, CancellationToken cancellationToken);
 
-        event Func<T, Task> OnMessage;
+        event Func<MessageBusData, Task> OnMessage;
         void Close();
     }
 }

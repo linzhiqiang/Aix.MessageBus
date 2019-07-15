@@ -57,7 +57,8 @@ namespace Sample
                     
                     var current = Interlocked.Increment(ref Count);
                    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费1数据：MessageId={message.MessageId},Content={message.Content},count={current}");
-                    //throw new RetryException();
+                   // throw new Exception();
+                    throw new RetryException();
                     await Task.CompletedTask;
                     //await Task.Delay(1000);
                 }, context, cancellationToken);

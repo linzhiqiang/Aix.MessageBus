@@ -6,6 +6,8 @@ namespace Aix.MessageBus.RabbitMQ
 {
     public class RabbitMQMessageBusOptions
     {
+        private int[] DefaultRetryStrategy = new int[] { 1, 5, 10, 30, 60, 60, 2 * 60, 2 * 60, 5 * 60, 5 * 60 };
+
         /// <summary>
         /// 默认延迟队列 延迟时间配置  （秒，延迟队列名称后缀）
         /// </summary>
@@ -14,6 +16,7 @@ namespace Aix.MessageBus.RabbitMQ
             { (int)TimeSpan.FromSeconds(5).TotalSeconds,"5s"},
             { (int)TimeSpan.FromSeconds(30).TotalSeconds,"30s"},
             { (int)TimeSpan.FromMinutes(1).TotalSeconds,"1m"},
+            { (int)TimeSpan.FromMinutes(30).TotalSeconds,"30m"},
             { (int)TimeSpan.FromHours(1).TotalSeconds,"1h"},
             { (int)TimeSpan.FromDays(1).TotalSeconds,"1d"},
         };
@@ -22,14 +25,15 @@ namespace Aix.MessageBus.RabbitMQ
             Port = 5672;
             VirtualHost = "/";
 
-            this.TopicPrefix = "rabbitmq-";
+            this.TopicPrefix = "rabbitmq-messagebus-";
             this.Serializer = new MessagePackSerializer();
             this.ConfirmSelect = false;
             this.DefaultConsumerThreadCount = 4;
             this.AutoAck = true;
             this.ManualCommitBatch = 10;
 
-
+            this.MaxErrorReTryCount = 10;
+            this.RetryStrategy = DefaultRetryStrategy;
         }
         public string HostName { get; set; }
 
@@ -82,6 +86,25 @@ namespace Aix.MessageBus.RabbitMQ
                 return _delayQueueConfig;
             }
             set { _delayQueueConfig = value; }
+        }
+
+        /// <summary>
+        /// 最大错误重试次数 默认10次
+        /// </summary>
+        public int MaxErrorReTryCount { get; set; }
+
+        private int[] _retryStrategy;
+        /// <summary>
+        /// 失败重试延迟策略 单位：秒  默认失败次数对应值延迟时间[ 1,5, 10, 30,  60,  60, 2 * 60, 2 * 60, 5 * 60, 5 * 60  ];
+        /// </summary>
+        public int[] RetryStrategy
+        {
+            get
+            {
+                if (_retryStrategy == null || _retryStrategy.Length == 0) _retryStrategy = DefaultRetryStrategy;
+                return _retryStrategy;
+            }
+            set { _retryStrategy = value; }
         }
 
     }

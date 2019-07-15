@@ -9,6 +9,6 @@ namespace Aix.MessageBus.RabbitMQ
     {
         bool ProduceAsync(string topic, byte[] data);
 
-        bool ProduceAsync(string topic, byte[] data,TimeSpan delay);
+        bool ProduceDelayAsync(string topic, byte[] data,TimeSpan delay);
     }
 }
