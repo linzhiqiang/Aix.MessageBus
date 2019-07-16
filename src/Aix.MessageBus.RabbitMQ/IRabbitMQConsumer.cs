@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Aix.MessageBus.RabbitMQ.Model;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading;
@@ -10,7 +11,7 @@ namespace Aix.MessageBus.RabbitMQ
     {
         Task Subscribe(string topic, string groupId, CancellationToken cancellationToken);
 
-        event Func<MessageBusData, Task> OnMessage;
+        event Func<RabbitMessageBusData, Task> OnMessage;
         void Close();
     }
 }

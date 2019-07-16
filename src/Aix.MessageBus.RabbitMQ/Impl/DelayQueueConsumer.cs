@@ -138,7 +138,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
 
         private void Handler(byte[] data)
         {
-            var delayMessage = _options.Serializer.Deserialize<MessageBusData>(data);
+            var delayMessage = _options.Serializer.Deserialize<RabbitMessageBusData>(data);
 
             var delayTime = TimeSpan.FromMilliseconds(delayMessage.ExecuteTimeStamp - DateUtils.GetTimeStamp(DateTime.Now));
             if (delayTime > TimeSpan.Zero)

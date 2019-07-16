@@ -41,7 +41,7 @@ namespace Aix.MessageBus.RabbitMQ
         {
             AssertUtils.IsNotNull(message, "消息不能null");
             var topic = GetTopic(messageType);
-            var wrapMessage = new MessageBusData { Type = topic, Data = _options.Serializer.Serialize(message), ExecuteTimeStamp = DateUtils.GetTimeStamp(DateTime.Now) };
+            var wrapMessage = new RabbitMessageBusData { Type = topic, Data = _options.Serializer.Serialize(message), ExecuteTimeStamp = DateUtils.GetTimeStamp(DateTime.Now) };
             var data = _options.Serializer.Serialize(wrapMessage);
             this._producer.ProduceAsync(topic, data);
             return Task.CompletedTask;
@@ -53,7 +53,7 @@ namespace Aix.MessageBus.RabbitMQ
             if (delay > TimeSpan.Zero)
             { //加入延迟队列
                 var topic = GetTopic(messageType);
-                var wrapMessage = new MessageBusData { Type = topic, Data = _options.Serializer.Serialize(message), ExecuteTimeStamp = DateUtils.GetTimeStamp(DateTime.Now.Add(delay)) };
+                var wrapMessage = new RabbitMessageBusData { Type = topic, Data = _options.Serializer.Serialize(message), ExecuteTimeStamp = DateUtils.GetTimeStamp(DateTime.Now.Add(delay)) };
                 var data = _options.Serializer.Serialize(wrapMessage);
                 this._producer.ProduceDelayAsync(topic, data, delay);
             }

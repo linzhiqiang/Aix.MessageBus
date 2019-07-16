@@ -61,7 +61,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             var exchange = Helper.GeteDelayExchangeName(_options);
             var delayTopic = Helper.GetDelayTopic(_options,delay);
             var routingKey = Helper.GeteRoutingKey(delayTopic,"");
-
+        
             _channel.BasicPublish(exchange: exchange,
                                               routingKey: routingKey,
                                               basicProperties: _basicProperties,

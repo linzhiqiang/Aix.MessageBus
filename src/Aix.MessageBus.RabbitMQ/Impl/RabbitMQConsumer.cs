@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Aix.MessageBus.Utils;
 using RabbitMQ.Client.Events;
 using Aix.MessageBus.Exceptions;
+using Aix.MessageBus.RabbitMQ.Model;
 
 namespace Aix.MessageBus.RabbitMQ.Impl
 {
@@ -42,7 +43,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             _autoAck = _options.AutoAck;
         }
 
-        public event Func<MessageBusData, Task> OnMessage;
+        public event Func<RabbitMessageBusData, Task> OnMessage;
 
         public Task Subscribe(string topic, string groupId, CancellationToken cancellationToken)
         {
@@ -103,7 +104,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             if (!_isStart) return; //这里有必要的，关闭时已经手工提交了，由于客户端还有累计消息会继续执行，但是不能确认（连接已关闭）
             try
             {
-                var data = _options.Serializer.Deserialize<MessageBusData>(deliverEventArgs.Body);
+                var data = _options.Serializer.Deserialize<RabbitMessageBusData>(deliverEventArgs.Body);
                 var isSuccess = Handler(data);
                 if (isSuccess == false)
                 {
@@ -126,7 +127,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
         /// 加入延迟队列重试
         /// </summary>
         /// <param name="data"></param>
-        private void ExecuteErrorToDelayTask(MessageBusData data)
+        private void ExecuteErrorToDelayTask(RabbitMessageBusData data)
         {
             if (data.ErrorCount < _options.MaxErrorReTryCount)
             {
@@ -188,7 +189,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        private bool Handler(MessageBusData obj)
+        private bool Handler(RabbitMessageBusData obj)
         {
             var isSuccess = true;
             if (OnMessage == null) return isSuccess;

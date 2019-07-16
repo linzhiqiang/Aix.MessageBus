@@ -5,13 +5,13 @@ using System.Linq;
 
 namespace Aix.MessageBus.RabbitMQ
 {
-   internal static class Helper
+    internal static class Helper
     {
         public static string GeteExchangeName(string topic)
         {
-            return $"{topic}-exchange"; 
+            return $"{topic}-exchange";
         }
-        public static string GeteQueueName(string topic,string groupId)
+        public static string GeteQueueName(string topic, string groupId)
         {
             if (string.IsNullOrEmpty(groupId))
             {
@@ -23,7 +23,7 @@ namespace Aix.MessageBus.RabbitMQ
             }
         }
 
-        public static string GeteRoutingKey(string topic,string groupId)
+        public static string GeteRoutingKey(string topic, string groupId)
         {
             if (string.IsNullOrEmpty(groupId))
             {
@@ -58,7 +58,7 @@ namespace Aix.MessageBus.RabbitMQ
             List<string> delayTopics = new List<string>();
             foreach (var item in options.DelayQueueConfig)
             {
-                var temp= GetDelayTopic(options, item.Value);
+                var temp = GetDelayTopic(options, item.Value);
                 delayTopics.Add(temp);
             }
 
@@ -70,7 +70,8 @@ namespace Aix.MessageBus.RabbitMQ
 
             var keys = options.DelayQueueConfig.Keys.ToList();
 
-            for (int i = 0; i < keys.Count; i++)
+            //for (int i = 0; i < keys.Count; i++)
+            for (int i = keys.Count-1; i >=0; i--)
             {
                 if (dealySecond > keys[i])
                 {

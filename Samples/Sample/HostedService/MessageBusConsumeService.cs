@@ -30,7 +30,7 @@ namespace Sample
             {
                 List<Task> taskList = new List<Task>(); //多个订阅者
                 taskList.Add(Subscribe(cancellationToken));
-                //taskList.Add(Test(cancellationToken));
+                taskList.Add(Subscribe2(cancellationToken));
 
                 await Task.WhenAll(taskList.ToArray());
             });
@@ -54,11 +54,11 @@ namespace Sample
                 context.Config.Add("ConsumerThreadCount", "4");//该订阅的消费线程数，若是kafka注意和分区数匹配
                 await _messageBus.SubscribeAsync<BusinessMessage>(async (message) =>
                 {
-                    
+
                     var current = Interlocked.Increment(ref Count);
-                   _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费1数据：MessageId={message.MessageId},Content={message.Content},count={current}");
-                   // throw new Exception();
-                    throw new RetryException();
+                    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费1-1数据：MessageId={message.MessageId},Content={message.Content},count={current}");
+                    // throw new Exception();
+                   // throw new RetryException();
                     await Task.CompletedTask;
                     //await Task.Delay(1000);
                 }, context, cancellationToken);
@@ -74,46 +74,61 @@ namespace Sample
                 {
 
                     var current = Interlocked.Increment(ref Count);
-                    // _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费2数据：MessageId={message.MessageId},Content={message.Content},count={current}");
-                    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}——{message.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")}消费2数据：,count={current}");
-                   // throw new Exception();
+                     _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费1-2数据：MessageId={message.MessageId},Content={message.Content},count={current}");
+                    //_logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}——{message.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")}消费2数据：,count={current}");
+                    // throw new Exception();
                     // await Task.Delay(1000);
                     // throw new RetryException();
                     await Task.CompletedTask;
                 }, null, cancellationToken);
 
 
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "");
+            }
+        }
 
-
-                MessageBusContext context3 = new MessageBusContext();
-                context3.Config.Add("GroupId", "group1"); //kafka消费者组(只有kafka使用)
-                context3.Config.Add("ConsumerThreadCount", "4");//该订阅的消费线程数，若是kafka注意和分区数匹配
+        private async Task Subscribe2(CancellationToken cancellationToken)
+        {
+            try
+            {
+                //订阅
+                MessageBusContext context = new MessageBusContext();
+                context.Config.Add("GroupId", "group1"); //kafka消费者组(只有kafka使用)
+                context.Config.Add("ConsumerThreadCount", "4");//该订阅的消费线程数，若是kafka注意和分区数匹配
                 await _messageBus.SubscribeAsync<BusinessMessage2>(async (message) =>
                 {
 
                     var current = Interlocked.Increment(ref Count);
-                    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费1数据：MessageId={message.MessageId},Content={message.Content},count={current}");
+                    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费2-1数据：MessageId={message.MessageId},Content={message.Content},count={current}");
                     // throw new Exception();
-                    //throw new RetryException();
+                    // throw new RetryException();
                     await Task.CompletedTask;
                     //await Task.Delay(1000);
-                }, context3, cancellationToken);
+                }, context, cancellationToken);
 
 
+                //订阅
+                //MessageBusContext context2 = new MessageBusContext();
+                //context2.Config.Add("GroupId", "group2");//消费者组
+                //context2.Config.Add("ConsumerThreadCount", "2");//该订阅的消费线程数，注意和分区数匹配
 
-                MessageBusContext context4 = new MessageBusContext();
-                context4.Config.Add("GroupId", "group2"); //kafka消费者组(只有kafka使用)
-                context4.Config.Add("ConsumerThreadCount", "4");//该订阅的消费线程数，若是kafka注意和分区数匹配
+                //使用默认分组
                 await _messageBus.SubscribeAsync<BusinessMessage2>(async (message) =>
                 {
 
                     var current = Interlocked.Increment(ref Count);
-                    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费1数据：MessageId={message.MessageId},Content={message.Content},count={current}");
+                    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费2-2数据：MessageId={message.MessageId},Content={message.Content},count={current}");
+                    //_logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}——{message.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")}消费2数据：,count={current}");
                     // throw new Exception();
-                    throw new RetryException();
+                     //await Task.Delay(1000);
+                   //  throw new RetryException();
                     await Task.CompletedTask;
-                    //await Task.Delay(1000);
-                }, context4, cancellationToken);
+                }, null, cancellationToken);
+
+
             }
             catch (Exception ex)
             {
