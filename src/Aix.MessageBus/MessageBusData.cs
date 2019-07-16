@@ -15,5 +15,7 @@ namespace Aix.MessageBus
         public long ExecuteTimeStamp { get; set; }
 
         public int ErrorCount { get; set; }
+
+        public string GroupId { get; set; }
     }
 }

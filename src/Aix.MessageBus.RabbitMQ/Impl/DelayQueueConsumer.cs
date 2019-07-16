@@ -62,7 +62,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
                 var delayMillTime = item.Key * 1000;
 
                 var delayTopic = Helper.GetDelayTopic(_options, item.Value);
-                var routingKey = Helper.GeteRoutingKey(delayTopic);
+                var routingKey = Helper.GeteRoutingKey(delayTopic,"");
                 var queue = delayTopic;
 
                 var arguments = new Dictionary<string, object>();
@@ -86,7 +86,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
 
             var exchange = Helper.GetDelayConsumerExchange(_options);
             var topic = Helper.GetDelayConsumerQueue(_options);
-            var routingKey = Helper.GeteRoutingKey(topic);
+            var routingKey = Helper.GeteRoutingKey(topic,"");
             var queue = topic;
 
             //定义交换器
@@ -148,7 +148,14 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             }
             else
             {//即时任务
-                _producer.ProduceAsync(delayMessage.Type, data);
+                if (delayMessage.ErrorCount <= 0)
+                {
+                    _producer.ProduceAsync(delayMessage.Type, data);
+                }
+                else
+                {
+                    _producer.ErrorReProduceAsync(delayMessage.Type, delayMessage.GroupId, data);
+                }
             }
         }
 

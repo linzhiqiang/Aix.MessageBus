@@ -23,9 +23,17 @@ namespace Aix.MessageBus.RabbitMQ
             }
         }
 
-        public static string GeteRoutingKey(string topic)
+        public static string GeteRoutingKey(string topic,string groupId)
         {
-            return $"{topic}-routingkey";
+            if (string.IsNullOrEmpty(groupId))
+            {
+                return $"{topic}-routingkey";
+            }
+            else
+            {
+                return $"{topic}-{groupId}-routingkey";
+            }
+
         }
 
         #region delay
@@ -77,6 +85,20 @@ namespace Aix.MessageBus.RabbitMQ
         public static string GetDelayTopic(RabbitMQMessageBusOptions options, string postfix)
         {
             return $"{options.TopicPrefix }delay-queue{postfix}";
+        }
+
+        #endregion
+
+        #region  error
+
+        /// <summary>
+        /// 失败重试 进入单个交换器 
+        /// </summary>
+        /// <param name="topic"></param>
+        /// <returns></returns>
+        public static string GetErrorReEnqueneExchangeName(string topic)
+        {
+            return $"{topic}-reenqueue-exchange";
         }
 
         #endregion

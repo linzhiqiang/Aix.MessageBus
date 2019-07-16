@@ -37,7 +37,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
         public bool ProduceAsync(string topic, byte[] data)
         {
             var exchange = Helper.GeteExchangeName(topic);
-            var routingKey = Helper.GeteRoutingKey(topic);
+            var routingKey = Helper.GeteRoutingKey(topic,"");
 
             _channel.BasicPublish(exchange: exchange,
                                               routingKey: routingKey,
@@ -60,7 +60,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             }
             var exchange = Helper.GeteDelayExchangeName(_options);
             var delayTopic = Helper.GetDelayTopic(_options,delay);
-            var routingKey = Helper.GeteRoutingKey(delayTopic);
+            var routingKey = Helper.GeteRoutingKey(delayTopic,"");
 
             _channel.BasicPublish(exchange: exchange,
                                               routingKey: routingKey,
@@ -75,6 +75,24 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             return isOk;
         }
 
+
+        public bool ErrorReProduceAsync(string topic, string groupId, byte[] data)
+        {
+            var exchange = Helper.GetErrorReEnqueneExchangeName(topic);
+            var routingKey = Helper.GeteRoutingKey(topic, groupId);
+
+            _channel.BasicPublish(exchange: exchange,
+                                              routingKey: routingKey,
+                                              basicProperties: _basicProperties,
+                                              body: data);
+
+            var isOk = true;
+            if (_options.ConfirmSelect)
+            {
+                isOk = _channel.WaitForConfirms();
+            }
+            return isOk;
+        }
         public void Dispose()
         {
             _logger.LogInformation("RabbitMQ关闭生产者");

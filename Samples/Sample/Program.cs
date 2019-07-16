@@ -78,6 +78,7 @@ namespace Sample
                         case 3:
                             var rabbitMQMessageBusOptions = context.Configuration.GetSection("rabbitmq").Get<RabbitMQMessageBusOptions>();
                             rabbitMQMessageBusOptions.RetryStrategy = new int[] { 0, 0, 5, 10, 10, 10, 10 };
+                            rabbitMQMessageBusOptions.MaxErrorReTryCount = 5;
                             services.AddRabbitMQMessageBus(rabbitMQMessageBusOptions);
                             break;
                         default:

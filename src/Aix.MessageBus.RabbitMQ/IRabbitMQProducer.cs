@@ -10,5 +10,7 @@ namespace Aix.MessageBus.RabbitMQ
         bool ProduceAsync(string topic, byte[] data);
 
         bool ProduceDelayAsync(string topic, byte[] data,TimeSpan delay);
+
+        bool ErrorReProduceAsync(string topic, string groupId, byte[] data);
     }
 }
