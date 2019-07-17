@@ -7,9 +7,21 @@ namespace Aix.MessageBus.Kafka
 {
     public class KafkaMessageBusOptions
     {
+        /// <summary>
+        /// 默认延迟队列 延迟时间配置  （秒，延迟队列名称后缀）
+        /// </summary>
+        private static Dictionary<int, string> DefaultDelayQueueConfig = new Dictionary<int, string>
+        {
+            { (int)TimeSpan.FromSeconds(5).TotalSeconds,"5s"},
+            { (int)TimeSpan.FromSeconds(30).TotalSeconds,"30s"},
+            { (int)TimeSpan.FromMinutes(1).TotalSeconds,"1m"},
+            { (int)TimeSpan.FromMinutes(30).TotalSeconds,"30m"},
+            { (int)TimeSpan.FromHours(1).TotalSeconds,"1h"},
+            { (int)TimeSpan.FromDays(1).TotalSeconds,"1d"},
+        };
         public KafkaMessageBusOptions()
         {
-            this.TopicPrefix = "kafka-";
+            this.TopicPrefix = "kafka-messagebus-";
             this.Serializer = new MessagePackSerializer();
             this.DefaultConsumerThreadCount = 4;
             this.ManualCommitBatch = 10;
@@ -45,5 +57,16 @@ namespace Aix.MessageBus.Kafka
         /// EnableAutoCommit=false时每多少个消息提交一次 默认10条消息提交一次
         /// </summary>
         public int ManualCommitBatch { get; set; }
+
+        private Dictionary<int, string> _delayQueueConfig;
+        public Dictionary<int, string> DelayQueueConfig
+        {
+            get
+            {
+                if (_delayQueueConfig == null || _delayQueueConfig.Count == 0) _delayQueueConfig = DefaultDelayQueueConfig;
+                return _delayQueueConfig;
+            }
+            set { _delayQueueConfig = value; }
+        }
     }
 }

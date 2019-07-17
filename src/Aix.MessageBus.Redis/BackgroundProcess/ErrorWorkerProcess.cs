@@ -12,7 +12,7 @@ namespace Aix.MessageBus.Redis.BackgroundProcess
     /// <summary>
     /// 执行中队列，错误数据处理 重新入队
     /// </summary>
-    public class ErrorWorkerProcess : IBackgroundProcess
+    internal class ErrorWorkerProcess : IBackgroundProcess
     {
         private IServiceProvider _serviceProvider;
         private ILogger<ErrorWorkerProcess> _logger;

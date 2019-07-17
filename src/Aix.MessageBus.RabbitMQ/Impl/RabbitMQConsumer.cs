@@ -13,7 +13,7 @@ using Aix.MessageBus.RabbitMQ.Model;
 
 namespace Aix.MessageBus.RabbitMQ.Impl
 {
-    public class RabbitMQConsumer : IRabbitMQConsumer
+    internal class RabbitMQConsumer : IRabbitMQConsumer
     {
         private IServiceProvider _serviceProvider;
         private ILogger<RabbitMQConsumer> _logger;
@@ -191,7 +191,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
         /// <returns></returns>
         private bool Handler(RabbitMessageBusData obj)
         {
-            var isSuccess = true;
+            var isSuccess = true; //失败标识需要重试
             if (OnMessage == null) return isSuccess;
 
             try
@@ -200,14 +200,13 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             }
             catch (RetryException ex)
             {
-                _logger.LogError($"rabbitMQ消费失败重试, {ex.Message}, {ex.StackTrace}");
                 isSuccess = false;
+                _logger.LogError($"rabbitMQ消费失败重试, topic={obj.Type}，group={obj.GroupId}，ErrorCount={obj.ErrorCount}，{ex.Message}, {ex.StackTrace}");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"rabbitMQ消费失败, {ex.Message}, {ex.StackTrace}");
+                _logger.LogError($"rabbitMQ消费失败, topic={obj.Type}，group={obj.GroupId}，{ex.Message}, {ex.StackTrace}");
             }
-
             return isSuccess;
         }
 

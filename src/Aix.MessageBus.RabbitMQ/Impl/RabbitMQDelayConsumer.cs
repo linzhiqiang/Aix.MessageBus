@@ -13,10 +13,10 @@ using Aix.MessageBus.RabbitMQ.Model;
 
 namespace Aix.MessageBus.RabbitMQ.Impl
 {
-    public class DelayQueueConsumer : IDelayQueueConsumer
+    internal class RabbitMQDelayConsumer : IRabbitMQDelayConsumer
     {
         private IServiceProvider _serviceProvider;
-        private ILogger<DelayQueueConsumer> _logger;
+        private ILogger<RabbitMQDelayConsumer> _logger;
         private RabbitMQMessageBusOptions _options;
         private IRabbitMQProducer _producer;
 
@@ -30,12 +30,12 @@ namespace Aix.MessageBus.RabbitMQ.Impl
 
         private int ManualCommitBatch = 1;
 
-        public DelayQueueConsumer(IServiceProvider serviceProvider, IRabbitMQProducer producer)
+        public RabbitMQDelayConsumer(IServiceProvider serviceProvider, IRabbitMQProducer producer)
         {
             _serviceProvider = serviceProvider;
             _producer = producer;
 
-            _logger = serviceProvider.GetService<ILogger<DelayQueueConsumer>>();
+            _logger = serviceProvider.GetService<ILogger<RabbitMQDelayConsumer>>();
             _options = serviceProvider.GetService<RabbitMQMessageBusOptions>();
 
             _connection = _serviceProvider.GetService<IConnection>();
@@ -126,7 +126,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             }
             catch (Exception ex)
             {
-                _logger.LogError($"rabbitMQ消费接收消息失败, {ex.Message}, {ex.StackTrace}");
+                _logger.LogError($"rabbitMQ消费延迟消息失败, {ex.Message}, {ex.StackTrace}");
             }
             finally
             {
@@ -136,6 +136,10 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             }
         }
 
+        /// <summary>
+        /// 延迟任务消费处理   三种情况： 1=任务到期进去即时任务，2=任务没有到期 继续进入延迟队列。3=任务到期，是失败重试的任务需要进入单个队列
+        /// </summary>
+        /// <param name="data"></param>
         private void Handler(byte[] data)
         {
             var delayMessage = _options.Serializer.Deserialize<RabbitMessageBusData>(data);

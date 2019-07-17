@@ -1,4 +1,5 @@
-﻿using Aix.MessageBus.Utils;
+﻿using Aix.MessageBus.Redis.Model;
+using Aix.MessageBus.Utils;
 using Microsoft.Extensions.Logging;
 using StackExchange.Redis;
 using System;
@@ -29,7 +30,7 @@ namespace Aix.MessageBus.Redis
         }
         public Task PublishAsync(Type messageType, object message)
         {
-            var data = new MessageBusData { Type = GetHandlerKey(messageType), Data = _options.Serializer.Serialize(message) };
+            var data = new RedisMessageBusData { Type = GetHandlerKey(messageType), Data = _options.Serializer.Serialize(message) };
             return _subscriber.PublishAsync(GetTopic(messageType), _options.Serializer.Serialize(data));
         }
 
@@ -45,7 +46,7 @@ namespace Aix.MessageBus.Redis
             {
                 var task = With.NoException(_logger, async () =>
                 {
-                    var messageBusData = _options.Serializer.Deserialize<MessageBusData>(value);
+                    var messageBusData = _options.Serializer.Deserialize<RedisMessageBusData>(value);
                     var obj = _options.Serializer.Deserialize<T>(messageBusData.Data);
                     await handler(obj);
                 }, $"消费数据{typeof(T).Name}");

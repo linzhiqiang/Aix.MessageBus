@@ -12,7 +12,7 @@ namespace Aix.MessageBus.Redis.BackgroundProcess
     /// <summary>
     /// 及时任务执行
     /// </summary>
-    public class WorkerProcess : IBackgroundProcess
+    internal class WorkerProcess : IBackgroundProcess
     {
         private IServiceProvider _serviceProvider;
         private ILogger<WorkerProcess> _logger;

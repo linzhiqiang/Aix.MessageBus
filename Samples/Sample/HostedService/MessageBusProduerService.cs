@@ -84,16 +84,16 @@ namespace Sample
                         //await Task.Delay(TimeSpan.FromSeconds(1));
                     }, "生产消息");
 
-                    await With.NoException(_logger, async () =>
-                    {
-                        var delay = TimeSpan.FromSeconds(100); //TimeSpan.FromSeconds(DelaySeconds[i % DelaySeconds.Length]);
-                        var delayDatetime = DateTime.Now.Add(delay);
-                        var messageData = new BusinessMessage2 { MessageId = i.ToString(), Content = $"我是内容_{i}", CreateTime = delayDatetime };
-                        await _messageBus.PublishDelayAsync<BusinessMessage2>(messageData, delay);
-                        //await _messageBus.PublishAsync<BusinessMessage2>(messageData);
-                        _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}——{delayDatetime.ToString("yyyy-MM-dd HH:mm:ss")}生产数据：MessageId={messageData.MessageId}");
-                        //await Task.Delay(TimeSpan.FromSeconds(1));
-                    }, "生产消息");
+                    //await With.NoException(_logger, async () =>
+                    //{
+                    //    var delay = TimeSpan.FromSeconds(100); //TimeSpan.FromSeconds(DelaySeconds[i % DelaySeconds.Length]);
+                    //    var delayDatetime = DateTime.Now.Add(delay);
+                    //    var messageData = new BusinessMessage2 { MessageId = i.ToString(), Content = $"我是内容_{i}", CreateTime = delayDatetime };
+                    //    await _messageBus.PublishDelayAsync<BusinessMessage2>(messageData, delay);
+                    //    //await _messageBus.PublishAsync<BusinessMessage2>(messageData);
+                    //    _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}——{delayDatetime.ToString("yyyy-MM-dd HH:mm:ss")}生产数据：MessageId={messageData.MessageId}");
+                    //    //await Task.Delay(TimeSpan.FromSeconds(1));
+                    //}, "生产消息");
 
 
 

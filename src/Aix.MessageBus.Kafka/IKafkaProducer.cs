@@ -1,4 +1,5 @@
-﻿using Confluent.Kafka;
+﻿using Aix.MessageBus.Kafka.Model;
+using Confluent.Kafka;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -6,8 +7,10 @@ using System.Threading.Tasks;
 
 namespace Aix.MessageBus.Kafka
 {
-    internal interface IKafkaProducer<TKey, TValue> : IDisposable
+    internal interface IKafkaProducer : IDisposable
     {
-        Task<DeliveryResult<TKey, TValue>> ProduceAsync(string topic, Message<TKey, TValue> message);
+        Task<DeliveryResult<Null, KafkaMessageBusData>> ProduceAsync(KafkaMessageBusData data);
+
+        Task<DeliveryResult<Null, KafkaMessageBusData>> ProduceDelayAsync(KafkaMessageBusData data, TimeSpan delay);
     }
 }

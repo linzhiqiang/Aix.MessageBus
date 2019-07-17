@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Aix.MessageBus.RabbitMQ
 {
-    public interface IDelayQueueConsumer : IDisposable
+    public interface IRabbitMQDelayConsumer : IDisposable
     {
         Task Subscribe();
 

@@ -9,7 +9,7 @@ using Aix.MessageBus.Utils;
 
 namespace Aix.MessageBus.RabbitMQ.Impl
 {
-    public class RabbitMQProducer : IRabbitMQProducer
+    internal class RabbitMQProducer : IRabbitMQProducer
     {
         private IServiceProvider _serviceProvider;
         private ILogger<RabbitMQProducer> _logger;

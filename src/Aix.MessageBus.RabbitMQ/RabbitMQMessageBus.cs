@@ -23,7 +23,7 @@ namespace Aix.MessageBus.RabbitMQ
         IConnection _connection;
         IRabbitMQProducer _producer;
         List<IDisposable> _consumers = new List<IDisposable>();
-        IDelayQueueConsumer _delayQueueConsumer;
+        IRabbitMQDelayConsumer _delayQueueConsumer;
         private HashSet<string> Subscribers = new HashSet<string>();
         private volatile bool _isInitDelayQueue = false;
 
@@ -125,7 +125,7 @@ namespace Aix.MessageBus.RabbitMQ
                 _isInitDelayQueue = true;
             }
 
-            _delayQueueConsumer = new DelayQueueConsumer(this._serviceProvider, this._producer);
+            _delayQueueConsumer = new RabbitMQDelayConsumer(this._serviceProvider, this._producer);
             _delayQueueConsumer.Subscribe();
 
         }

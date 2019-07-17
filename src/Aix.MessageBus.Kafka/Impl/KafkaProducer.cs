@@ -1,4 +1,5 @@
-﻿using Aix.MessageBus.Utils;
+﻿using Aix.MessageBus.Kafka.Model;
+using Aix.MessageBus.Utils;
 using Confluent.Kafka;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -14,26 +15,40 @@ namespace Aix.MessageBus.Kafka.Impl
     /// </summary>
     /// <typeparam name="TKey"></typeparam>
     /// <typeparam name="TValue"></typeparam>
-    internal class KafkaProducer<TKey, TValue> : IKafkaProducer<TKey, TValue>
+    internal class KafkaProducer : IKafkaProducer
     {
         private IServiceProvider _serviceProvider;
-        private ILogger<KafkaProducer<TKey, TValue>> _logger;
+        private ILogger<KafkaProducer> _logger;
         private KafkaMessageBusOptions _kafkaOptions;
 
-        IProducer<TKey, TValue> _producer = null;
+        IProducer<Null, KafkaMessageBusData> _producer = null;
         public KafkaProducer(IServiceProvider serviceProvider)
         {
             _serviceProvider = serviceProvider;
 
-            _logger = serviceProvider.GetService<ILogger<KafkaProducer<TKey, TValue>>>();
+            _logger = serviceProvider.GetService<ILogger<KafkaProducer>>();
             _kafkaOptions = serviceProvider.GetService<KafkaMessageBusOptions>();
 
             this.CreateProducer();
         }
 
-        public Task<DeliveryResult<TKey, TValue>> ProduceAsync(string topic, Message<TKey, TValue> message)
+        public Task<DeliveryResult<Null, KafkaMessageBusData>> ProduceAsync(KafkaMessageBusData data)
         {
-            return this._producer.ProduceAsync(topic, message);
+            var message = new Message<Null, KafkaMessageBusData> { Value = data };
+            return this._producer.ProduceAsync(message.Value.Topic, message);
+        }
+        public async Task<DeliveryResult<Null, KafkaMessageBusData>> ProduceDelayAsync(KafkaMessageBusData data, TimeSpan delay)
+        {
+            if (delay <= TimeSpan.Zero)
+            {
+                return await this.ProduceAsync(data);
+            }
+            else
+            {
+                var delayTopic = Helper.GetDelayTopic(_kafkaOptions, delay);
+                var message = new Message<Null, KafkaMessageBusData> { Value = data };
+              return   await  this._producer.ProduceAsync(delayTopic, message);
+            }
         }
 
         public void Dispose()
@@ -64,7 +79,7 @@ namespace Aix.MessageBus.Kafka.Impl
                 {
                     throw new Exception("kafka BootstrapServers参数");
                 }
-                IProducer<TKey, TValue> producer = new ProducerBuilder<TKey, TValue>(_kafkaOptions.ProducerConfig)
+                IProducer<Null, KafkaMessageBusData> producer = new ProducerBuilder<Null, KafkaMessageBusData>(_kafkaOptions.ProducerConfig)
                 .SetErrorHandler((p, error) =>
                 {
                     if (error.IsFatal)
@@ -73,7 +88,7 @@ namespace Aix.MessageBus.Kafka.Impl
                         _logger.LogError($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}Kafka生产者出错：{errorInfo}");
                     }
                 })
-               .SetValueSerializer(new ConfluentKafkaSerializerAdapter<TValue>(_kafkaOptions.Serializer))
+               .SetValueSerializer(new ConfluentKafkaSerializerAdapter<KafkaMessageBusData>(_kafkaOptions.Serializer))
                .Build();
 
                 this._producer = producer;

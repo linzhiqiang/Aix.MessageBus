@@ -13,7 +13,7 @@ namespace Aix.MessageBus.Redis.BackgroundProcess
     /// <summary>
     /// 延迟任务处理
     /// </summary>
-    public class DelayedWorkProcess : IBackgroundProcess
+    internal class DelayedWorkProcess : IBackgroundProcess
     {
         private IServiceProvider _serviceProvider;
         private ILogger<DelayedWorkProcess> _logger;
