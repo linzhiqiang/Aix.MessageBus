@@ -7,10 +7,8 @@ using System.Threading.Tasks;
 
 namespace Aix.MessageBus.Kafka
 {
-    internal interface IKafkaProducer : IDisposable
+    internal interface IKafkaProducer<TKey, TValue> : IDisposable
     {
-        Task<DeliveryResult<Null, KafkaMessageBusData>> ProduceAsync(KafkaMessageBusData data);
-
-        Task<DeliveryResult<Null, KafkaMessageBusData>> ProduceDelayAsync(KafkaMessageBusData data, TimeSpan delay);
+        Task<DeliveryResult<TKey, TValue>> ProduceAsync(string topic, Message<TKey, TValue> message);
     }
 }

@@ -77,7 +77,8 @@ namespace Sample
                     {
                         var delay = TimeSpan.FromSeconds(45);// TimeSpan.FromSeconds(DelaySeconds[i % DelaySeconds.Length]);
                         var delayDatetime = DateTime.Now.Add(delay);
-                        var messageData = new BusinessMessage { MessageId = i.ToString(), Content = $"我是内容_{i}", CreateTime = delayDatetime };
+                        var messageId = (i + 1).ToString();
+                        var messageData = new BusinessMessage { MessageId = messageId, Content = $"我是内容_{messageId}", CreateTime = delayDatetime };
                         // await _messageBus.PublishDelayAsync<BusinessMessage>(messageData, delay);
                         await _messageBus.PublishAsync(typeof(BusinessMessage), messageData);
                         _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}——{delayDatetime.ToString("yyyy-MM-dd HH:mm:ss")}生产数据：MessageId={messageData.MessageId}");
