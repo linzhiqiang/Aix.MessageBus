@@ -23,6 +23,7 @@ namespace Sample
     {
         static void Main(string[] args)
         {
+            System.Threading.ThreadPool.SetMinThreads(200, 200);
             Parser parser = new Parser((setting) =>
             {
                 setting.CaseSensitive = false;
