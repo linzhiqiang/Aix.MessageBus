@@ -17,6 +17,7 @@ namespace Aix.MessageBus.Redis
             this.ErrorReEnqueueIntervalSecond = 30;
             this.ExecuteTimeoutSecond = 60;
             this.MaxErrorReTryCount = 10;
+            this.CrontabLockSecond = 60;
             this.RetryStrategy = DefaultRetryStrategy;
         }
 
@@ -44,6 +45,11 @@ namespace Aix.MessageBus.Redis
         /// 任务数据有效期 默认7天 单位  天
         /// </summary>
         public int DataExpireDay { get; set; }
+
+        /// <summary>
+        /// 定时任务锁定时间
+        /// </summary>
+        public int CrontabLockSecond { get; set; }
 
         /// <summary>
         /// 默认每个类型的消费线程数 默认2个

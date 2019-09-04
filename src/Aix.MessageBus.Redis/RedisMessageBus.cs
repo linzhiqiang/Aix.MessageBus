@@ -35,7 +35,7 @@ namespace Aix.MessageBus.Redis
             _options = options;
             _redisStorage = redisStorage;
 
-            backgroundProcessContext = new BackgroundProcessContext(default);
+            backgroundProcessContext = new BackgroundProcessContext(default(CancellationToken));
             _processExecuter = new ProcessExecuter(_serviceProvider, backgroundProcessContext);
 
         }
@@ -62,7 +62,22 @@ namespace Aix.MessageBus.Redis
             AssertUtils.IsTrue(result, $"redis生产者数据失败,topic:{topic}");
         }
 
-        public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default)
+        public async Task PublishCrontabAsync(Type messageType, object message, CrontabJobInfo crontabJobInfo)
+        {
+            //传入redis即可
+            var crontabJobData = new CrontabJobData
+            {
+                JobId = crontabJobInfo.JobId,
+                JobName = crontabJobInfo.JobName,
+                CrontabExpression = crontabJobInfo.CrontabExpression,
+                Data = _options.Serializer.Serialize(message),
+                Topic = GetTopic(messageType)
+            };
+            var result = await _redisStorage.EnqueueCrontab(crontabJobData);
+            AssertUtils.IsTrue(result, $"redis生产定时任务失败,topic:{crontabJobData.Topic}");
+        }
+
+        public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             InitProcess();
             var topic = GetTopic(typeof(T));
@@ -112,8 +127,10 @@ namespace Aix.MessageBus.Redis
 
             Task.Run(async () =>
             {
-                await _processExecuter.AddProcess(new DelayedWorkProcess(_serviceProvider),"redis延迟任务处理");
-                await _processExecuter.AddProcess(new ErrorWorkerProcess(_serviceProvider),"redis失败任务处理");
+                await _processExecuter.AddProcess(new DelayedWorkProcess(_serviceProvider), "redis延迟任务处理");
+                await _processExecuter.AddProcess(new ErrorWorkerProcess(_serviceProvider), "redis失败任务处理");
+                await _processExecuter.AddProcess(new CrontabWorkProcess(_serviceProvider), "redis定时任务处理");
+                
             });
         }
 
@@ -135,7 +152,7 @@ namespace Aix.MessageBus.Redis
             for (int i = 0; i < threadCount; i++)
             {
                 var process = new WorkerProcess(_serviceProvider, topic, HandlerMessage);
-                await _processExecuter.AddProcess(process,$"redis即时任务处理：{topic}");
+                await _processExecuter.AddProcess(process, $"redis即时任务处理：{topic}");
             }
             backgroundProcessContext.SubscriberTopics.Add(topic);//便于ErrorProcess处理
         }

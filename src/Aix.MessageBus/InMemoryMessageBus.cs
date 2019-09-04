@@ -58,7 +58,7 @@ namespace Aix.MessageBus
             await this.PublishAsync(messageType,message);
         }
 
-        public Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context=null, CancellationToken cancellationToken=default)
+        public Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context=null, CancellationToken cancellationToken= default(CancellationToken))
         {
             string handlerKey = GetHandlerKey(typeof(T));
             var subscriber = new InMemorySubscriberInfo

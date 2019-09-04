@@ -18,7 +18,7 @@ namespace Aix.MessageBus.Kafka
         private KafkaMessageBusOptions _kafkaOptions;
         IKafkaProducer<Null, KafkaMessageBusData> _producer = null;
         List<IKafkaConsumer<Null, KafkaMessageBusData>> _consumerList = new List<IKafkaConsumer<Null, KafkaMessageBusData>>();
-        private CancellationToken _cancellationToken = default;
+        private CancellationToken _cancellationToken = default(CancellationToken);
 
         private HashSet<string> Subscribers = new HashSet<string>();
 
@@ -40,12 +40,13 @@ namespace Aix.MessageBus.Kafka
             await _producer.ProduceAsync(topic, new Message<Null, KafkaMessageBusData> { Value = data });
         }
 
-        public async Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
+        public Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
         {
-            await Task.Delay(delay);
-            await this.PublishAsync(messageType, message);
+            throw new NotImplementedException("kafka未实现延迟任务");
+            // await Task.Delay(delay);
+            // await this.PublishAsync(messageType, message);
         }
-        public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default)
+        public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             string topic = GetTopic(typeof(T));
 

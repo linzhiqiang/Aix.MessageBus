@@ -29,5 +29,20 @@ namespace Aix.MessageBus.Redis
         {
             return $"{options.TopicPrefix}ErrorJobChannel";
         }
+
+        public static string GetCrontabChannel(RedisMessageBusOptions options)
+        {
+            return $"{options.TopicPrefix}CrontabJobChannel";
+        }
+
+        public static string GetCrontabHashId(RedisMessageBusOptions options,string jobId)
+        {
+            return $"{options.TopicPrefix}crontabdata:{jobId}";
+        }
+        public static string GetCrontabSetName(RedisMessageBusOptions options)
+        {
+            return $"{options.TopicPrefix}CrontabSet";
+        }
+
     }
 }

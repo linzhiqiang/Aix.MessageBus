@@ -63,7 +63,7 @@ namespace Aix.MessageBus.RabbitMQ
             }
         }
 
-        public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default)
+        public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             InitDelayQueue();
             var topic = GetTopic(typeof(T));

@@ -18,6 +18,7 @@ namespace Aix.MessageBus.Redis.RedisImpl
         private RedisMessageBusOptions _options;
         private readonly RedisSubscription _queueJobChannelSubscription;
         private readonly RedisSubscription _errorJobChannelSubscription;
+        private readonly RedisSubscription _crontabJobChannelSubscription;
         public RedisStorage(IServiceProvider serviceProvider, ConnectionMultiplexer redis, RedisMessageBusOptions options)
         {
             _serviceProvider = serviceProvider;
@@ -26,7 +27,7 @@ namespace Aix.MessageBus.Redis.RedisImpl
             _database = redis.GetDatabase();
             _queueJobChannelSubscription = new RedisSubscription(_serviceProvider, _redis.GetSubscriber(), Helper.GetQueueJobChannel(_options));
             _errorJobChannelSubscription = new RedisSubscription(_serviceProvider, _redis.GetSubscriber(), Helper.GetErrorChannel(_options));
-
+            _crontabJobChannelSubscription = new RedisSubscription(_serviceProvider, _redis.GetSubscriber(), Helper.GetCrontabChannel(_options));
         }
 
         #region 生产者
@@ -71,6 +72,23 @@ namespace Aix.MessageBus.Redis.RedisImpl
             trans.HashSetAsync(hashJobId, values.ToArray());
             trans.KeyExpireAsync(hashJobId, TimeSpan.FromDays(_options.DataExpireDay));
             trans.SortedSetAddAsync(Helper.GetDelaySortedSetName(_options), jobData.JobId, DateUtils.GetTimeStamp(DateTime.Now.AddMilliseconds(delay.TotalMilliseconds))); //当前时间戳，
+
+            var result = trans.Execute();
+
+            return Task.FromResult(result);
+        }
+
+        public Task<bool> EnqueueCrontab(CrontabJobData crontabJobData)
+        {
+            var values = crontabJobData.ToDictionary();
+            var hashId = Helper.GetCrontabHashId(_options, crontabJobData.JobId);
+
+            var trans = _database.CreateTransaction();
+            trans.KeyDeleteAsync(hashId);
+            trans.HashSetAsync(hashId, values.ToArray());
+            trans.SetAddAsync(Helper.GetCrontabSetName(_options), crontabJobData.JobId);
+
+            trans.PublishAsync(_crontabJobChannelSubscription.Channel, crontabJobData.JobId);
 
             var result = trans.Execute();
 
@@ -175,6 +193,42 @@ namespace Aix.MessageBus.Redis.RedisImpl
 
         #endregion
 
+        #region 定时任务
+
+        public Task<string[]> GetAllCrontabJobId()
+        {
+            var list = _database.SetMembers(Helper.GetCrontabSetName(_options));
+            return Task.FromResult(list.ToStringArray());
+        }
+
+        public async Task<CrontabJobData> GetCrontabJobData(string jobId)
+        {
+            var data = await _database.HashGetAllAsync(Helper.GetCrontabHashId(_options, jobId));
+            if (data == null || data.Length == 0) return null;
+
+            var dict = data.ToDictionary();
+            CrontabJobData result = new CrontabJobData
+            {
+                JobId = dict.ContainsKey(nameof(CrontabJobData.JobId)) ? dict[nameof(CrontabJobData.JobId)] : RedisValue.EmptyString,
+                JobName = dict.ContainsKey(nameof(CrontabJobData.JobName)) ? dict[nameof(CrontabJobData.JobName)] : RedisValue.EmptyString,
+                CrontabExpression = dict.ContainsKey(nameof(CrontabJobData.CrontabExpression)) ? dict[nameof(CrontabJobData.CrontabExpression)] : RedisValue.EmptyString,
+                Data = dict.ContainsKey(nameof(CrontabJobData.Data)) ? dict[nameof(CrontabJobData.Data)] : RedisValue.Null,
+                Topic = dict.ContainsKey(nameof(CrontabJobData.Topic)) ? dict[nameof(CrontabJobData.Topic)] : RedisValue.EmptyString,
+                LastExecuteTime = dict.ContainsKey(nameof(CrontabJobData.LastExecuteTime)) ? dict[nameof(CrontabJobData.LastExecuteTime)] : RedisValue.EmptyString,
+            };
+            if (string.IsNullOrEmpty(result.JobId)) result = null;
+            return result;
+        }
+
+        public Task SetCrontabJobExecuteTime(string jobId, long timestamp)
+        {
+            _database.HashSet(Helper.GetCrontabHashId(_options, jobId), nameof(CrontabJobData.LastExecuteTime), timestamp);
+            return Task.CompletedTask;
+        }
+
+
+        #endregion
+
         #region 错误的数据处理
 
         public async Task<string[]> GetErrorJobId(string topic, int start, int end)
@@ -260,14 +314,19 @@ namespace Aix.MessageBus.Redis.RedisImpl
             }
         }
 
-        public void WaitForJob(TimeSpan timeSpan, CancellationToken cancellationToken = default)
+        public void WaitForJob(TimeSpan timeSpan, CancellationToken cancellationToken = default(CancellationToken))
         {
             _queueJobChannelSubscription.WaitForJob(timeSpan, cancellationToken);
         }
 
-        public void WaitForErrorJob(TimeSpan timeSpan, CancellationToken cancellationToken = default)
+        public void WaitForErrorJob(TimeSpan timeSpan, CancellationToken cancellationToken = default(CancellationToken))
         {
             _errorJobChannelSubscription.WaitForJob(timeSpan, cancellationToken);
+        }
+
+        public void WaitForCrontabJob(TimeSpan timeSpan, CancellationToken cancellationToken = default(CancellationToken))
+        {
+            _crontabJobChannelSubscription.WaitForJob(timeSpan, cancellationToken);
         }
 
         public async Task Lock(string key, TimeSpan span, Func<Task> action, Func<Task> concurrentCallback = null)
