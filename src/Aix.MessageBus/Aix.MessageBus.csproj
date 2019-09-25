@@ -9,7 +9,7 @@
     <Company>linzhiqiang</Company>
     <Product>linzhiqiang</Product>
     <Description>MessageBus通用接口定义</Description>
-    <Version>1.0.6</Version>
+    <Version>1.0.7</Version>
   </PropertyGroup>
 
   <ItemGroup>
