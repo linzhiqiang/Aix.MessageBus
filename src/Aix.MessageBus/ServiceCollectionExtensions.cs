@@ -7,10 +7,10 @@ namespace Aix.MessageBus
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddInMemoryMessageBus(this IServiceCollection services, InMemoryMessageBusOptions options)
+        public static IServiceCollection AddInMemoryMessageBus(this IServiceCollection services)
         {
             services
-               .AddSingleton<InMemoryMessageBusOptions>(options)
+               //.AddSingleton<InMemoryMessageBusOptions>(options)
                .AddSingleton<IMessageBus, InMemoryMessageBus>();
 
             return services;

@@ -10,25 +10,23 @@ using System.Threading.Tasks;
 namespace Aix.MessageBus
 {
 
-    public class InMemoryMessageBusOptions
-    {
-    }
+    //public class InMemoryMessageBusOptions
+    //{
+    //}
 
     public class InMemoryMessageBus : IMessageBus
     {
         private IServiceProvider _serviceProvider;
         private ILogger<InMemoryMessageBus> _logger;
-        private InMemoryMessageBusOptions _options;
 
         private CancellationToken _cancellationToken;
 
         ConcurrentDictionary<string, List<InMemorySubscriberInfo>> _subscriberDict = new ConcurrentDictionary<string, List<InMemorySubscriberInfo>>();
 
-        public InMemoryMessageBus(IServiceProvider serviceProvider, ILogger<InMemoryMessageBus> logger, InMemoryMessageBusOptions options)
+        public InMemoryMessageBus(IServiceProvider serviceProvider, ILogger<InMemoryMessageBus> logger)
         {
             _serviceProvider = serviceProvider;
             _logger = logger;
-            _options = options;
         }
 
         public Task PublishAsync(Type messageType, object message)
@@ -41,24 +39,28 @@ namespace Aix.MessageBus
                 {
                     if (this._cancellationToken != null && this._cancellationToken.IsCancellationRequested)
                         continue;
-                    Task.Run(() =>
+                    Task.Run(async () =>
                     {
                         if (this._cancellationToken != null && this._cancellationToken.IsCancellationRequested) return;
-                        item.Action(message);
+                        await With.NoException(_logger, () =>
+                        {
+                            return item.Action(message);
+                        }, $"执行出错,{item.Type.FullName}");
+
                     });
                 }
             }
             return Task.CompletedTask;
         }
 
-       public async Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
+        public async Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
         {
             AssertUtils.IsNotNull(message, "消息不能null");
             await Task.Delay(delay);
-            await this.PublishAsync(messageType,message);
+            await this.PublishAsync(messageType, message);
         }
 
-        public Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context=null, CancellationToken cancellationToken= default(CancellationToken))
+        public Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default(CancellationToken))
         {
             string handlerKey = GetHandlerKey(typeof(T));
             var subscriber = new InMemorySubscriberInfo
