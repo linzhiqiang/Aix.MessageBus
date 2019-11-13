@@ -61,7 +61,7 @@ namespace Aix.MessageBus.Kafka
         /// </summary>
         public int ManualCommitBatch { get; set; }
 
-        /*
+        
         private Dictionary<int, string> _delayQueueConfig;
         public Dictionary<int, string> DelayQueueConfig
         {
@@ -73,6 +73,7 @@ namespace Aix.MessageBus.Kafka
             set { _delayQueueConfig = value; }
         }
 
+        /*
         /// <summary>
         /// 最大错误重试次数 默认10次
         /// </summary>

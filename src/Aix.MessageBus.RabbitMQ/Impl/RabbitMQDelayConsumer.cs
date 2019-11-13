@@ -187,7 +187,6 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             {
                 //if (Count % _options.ManualCommitBatch == 0)
                 if (Count % ManualCommitBatch == 0)
-
                 {
                     With.NoException(_logger, () => { _channel.BasicAck(_currentDeliveryTag, true); }, "批量手工确认消息");
                     Count = 0;

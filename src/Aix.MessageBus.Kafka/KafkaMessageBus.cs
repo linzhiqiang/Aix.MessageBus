@@ -35,16 +35,26 @@ namespace Aix.MessageBus.Kafka
 
         public async Task PublishAsync(Type messageType, object message)
         {
+            AssertUtils.IsNotNull(message, "消息不能null");
             var topic = GetTopic(messageType);
             var data = new KafkaMessageBusData { Topic = topic, Data = _kafkaOptions.Serializer.Serialize(message) };
             await _producer.ProduceAsync(topic, new Message<Null, KafkaMessageBusData> { Value = data });
         }
 
-        public Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
+        public  Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
         {
-            throw new NotImplementedException("kafka未实现延迟任务");
-            // await Task.Delay(delay);
-            // await this.PublishAsync(messageType, message);
+            throw new NotImplementedException("kafka未实现延迟任务"); //建议使用数据库实现或数据库实现 或 数据库加redis实现
+            //AssertUtils.IsNotNull(message, "消息不能null");
+            //if (delay > TimeSpan.Zero)
+            //{
+            //    var topic = GetTopic(messageType);
+            //    var data = new KafkaMessageBusData { Topic = topic, Data = _kafkaOptions.Serializer.Serialize(message) };
+            //    await _producer.ProduceDelayAsync(topic, new Message<Null, KafkaMessageBusData> { Value = data }, delay);
+            //}
+            //else
+            //{
+            //    await PublishAsync(messageType, message);
+            //}
         }
         public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default(CancellationToken))
         {
@@ -96,7 +106,7 @@ namespace Aix.MessageBus.Kafka
 
         private string GetTopic(Type type)
         {
-            return $"{_kafkaOptions.TopicPrefix ?? ""}{type.Name}";
+            return Helper.GetTopic(_kafkaOptions, type);
         }
 
         #endregion

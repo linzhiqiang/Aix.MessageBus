@@ -36,7 +36,12 @@ namespace Aix.MessageBus.Kafka.Impl
         {
             return this._producer.ProduceAsync(topic, message);
         }
-       
+
+        public Task<DeliveryResult<TKey, TValue>> ProduceDelayAsync(string topic, Message<TKey, TValue> message, TimeSpan delay)
+        {
+            var delayTopic = Helper.GetDelayTopic(_kafkaOptions, delay);
+            return this.ProduceAsync(delayTopic, message);
+        }
 
         public void Dispose()
         {
