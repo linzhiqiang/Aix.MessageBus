@@ -7,6 +7,11 @@ namespace Aix.MessageBus.Redis
 {
     public static class MessageBusCrontabExtensions
     {
+        public static Task PublishDelayAsync<T>(this IMessageBus messageBus, Type messageType, object message, TimeSpan delay)
+        {
+            return (messageBus as RedisMessageBus).PublishDelayAsync(typeof(T), message, delay);
+        }
+
         public static Task PublishCrontabAsync<T>(this IMessageBus messageBus, T message, CrontabJobInfo crontabJobInfo)
         {
             return (messageBus as RedisMessageBus).PublishCrontabAsync(typeof(T), message, crontabJobInfo);

@@ -11,7 +11,7 @@ namespace Aix.MessageBus.Kafka
     {
         Task<DeliveryResult<TKey, TValue>> ProduceAsync(string topic, Message<TKey, TValue> message);
 
-        Task<DeliveryResult<TKey, TValue>> ProduceDelayAsync(string topic, Message<TKey, TValue> message, TimeSpan delay);
+        //Task<DeliveryResult<TKey, TValue>> ProduceDelayAsync(string topic, Message<TKey, TValue> message, TimeSpan delay);
         
     }
 }
