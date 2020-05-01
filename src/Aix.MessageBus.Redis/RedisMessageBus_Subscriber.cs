@@ -40,7 +40,7 @@ namespace Aix.MessageBus.Redis
             await this.PublishAsync(messageType, message);
         }
 
-        public Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context, CancellationToken cancellationToken = default(CancellationToken))
+        public Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
             return _subscriber.SubscribeAsync(GetTopic(typeof(T)), (channel, value) =>
             {

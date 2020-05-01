@@ -56,7 +56,7 @@ namespace Aix.MessageBus.Kafka
             //    await PublishAsync(messageType, message);
             //}
         }
-        public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default(CancellationToken))
+        public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
             string topic = GetTopic(typeof(T));
 
@@ -81,9 +81,9 @@ namespace Aix.MessageBus.Kafka
                     if (this._cancellationToken.IsCancellationRequested) return Task.CompletedTask;
                     return With.NoException(_logger, async () =>
                     {
-                        var obj = _kafkaOptions.Serializer.Deserialize<T>(consumeResult.Value.Data);
+                        var obj = _kafkaOptions.Serializer.Deserialize<T>(consumeResult.Message.Value.Data);
                         await handler(obj);
-                    }, $"消费数据{consumeResult.Value.Topic}");
+                    }, $"消费数据{consumeResult.Message.Value.Topic}");
                 };
 
                 _consumerList.Add(consumer);

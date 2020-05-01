@@ -20,6 +20,7 @@ namespace Aix.MessageBus.Kafka.Impl
         private IServiceProvider _serviceProvider;
         private ILogger<KafkaProducer<TKey, TValue>> _logger;
         private KafkaMessageBusOptions _kafkaOptions;
+        private static TimeSpan DefaultTimeout = TimeSpan.FromSeconds(5);
 
         IProducer<TKey, TValue> _producer = null;
         public KafkaProducer(IServiceProvider serviceProvider)
@@ -31,10 +32,33 @@ namespace Aix.MessageBus.Kafka.Impl
 
             this.CreateProducer();
         }
-
         public Task<DeliveryResult<TKey, TValue>> ProduceAsync(string topic, Message<TKey, TValue> message)
         {
             return this._producer.ProduceAsync(topic, message);
+        }
+
+        /// <summary>
+        /// 事务版本   貌似没必要 要求 配置TransactionalId，Acks必须等于all
+        /// </summary>
+        /// <param name="topic"></param>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        public async Task<DeliveryResult<TKey, TValue>> ProduceAsync2(string topic, Message<TKey, TValue> message)
+        {
+            DeliveryResult<TKey, TValue> result = null;
+            try
+            {
+                _producer.InitTransactions(DefaultTimeout);
+                _producer.BeginTransaction();
+                result = await this._producer.ProduceAsync(topic, message);
+                _producer.CommitTransaction(DefaultTimeout);
+            }
+            catch (Exception)
+            {
+                _producer.AbortTransaction(DefaultTimeout);
+                throw;
+            }
+            return result;
         }
 
         //public Task<DeliveryResult<TKey, TValue>> ProduceDelayAsync(string topic, Message<TKey, TValue> message, TimeSpan delay)

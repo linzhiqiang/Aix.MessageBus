@@ -61,6 +61,8 @@ namespace Aix.MessageBus.Kafka
         /// </summary>
         public int ManualCommitBatch { get; set; }
 
+
+        /***********************以下暂时没用*********************************/
         
         private Dictionary<int, string> _delayQueueConfig;
         public Dictionary<int, string> DelayQueueConfig

@@ -119,7 +119,8 @@ namespace Aix.MessageBus.Kafka.Impl
         private async Task Consumer()
         {
             var result = this._consumer.Consume(TimeSpan.FromSeconds(1));
-            if (result == null || result.IsPartitionEOF || result.Value == null)
+            // if (result == null || result.IsPartitionEOF || result.Value == null)
+            if (result == null || result.IsPartitionEOF || result.Message==null ||  result.Message.Value == null)
             {
                 return;
             }
@@ -200,7 +201,7 @@ namespace Aix.MessageBus.Kafka.Impl
             var config = new Dictionary<string, string>();
             lock (_kafkaOptions.ConsumerConfig)
             {
-                config= _kafkaOptions.ConsumerConfig.ToDictionary(x => x.Key, v => v.Value);
+                config = _kafkaOptions.ConsumerConfig.ToDictionary(x => x.Key, v => v.Value);
             }
             if (!string.IsNullOrEmpty(groupId))
             {
