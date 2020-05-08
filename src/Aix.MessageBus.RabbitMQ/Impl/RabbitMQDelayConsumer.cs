@@ -122,7 +122,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             if (!_isStart) return; //这里有必要的，关闭时已经手工提交了，由于客户端还有累计消息会继续执行，但是不能确认（连接已关闭）
             try
             {
-                Handler(deliverEventArgs.Body);
+                Handler(deliverEventArgs.Body.ToArray());
             }
             catch (Exception ex)
             {

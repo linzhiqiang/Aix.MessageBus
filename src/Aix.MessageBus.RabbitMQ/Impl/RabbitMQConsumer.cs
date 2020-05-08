@@ -104,7 +104,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
             if (!_isStart) return; //这里有必要的，关闭时已经手工提交了，由于客户端还有累计消息会继续执行，但是不能确认（连接已关闭）
             try
             {
-                var data = _options.Serializer.Deserialize<RabbitMessageBusData>(deliverEventArgs.Body);
+                var data = _options.Serializer.Deserialize<RabbitMessageBusData>(deliverEventArgs.Body.ToArray());
                 var isSuccess = Handler(data);
                 if (isSuccess == false)
                 {
