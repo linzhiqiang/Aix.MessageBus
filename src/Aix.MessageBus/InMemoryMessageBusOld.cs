@@ -1,5 +1,4 @@
-﻿using Aix.MessageBus.Foundation.EventLoop;
-using Aix.MessageBus.Utils;
+﻿using Aix.MessageBus.Utils;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Concurrent;
@@ -11,43 +10,24 @@ using System.Threading.Tasks;
 namespace Aix.MessageBus
 {
 
-    public class InMemoryMessageBusOptions
-    {
-        public InMemoryMessageBusOptions()
-        {
-            DefaultConsumerThreadCount = 1;
-        }
-        /// <summary>
-        /// 默认消费线程数 默认1个
-        /// </summary>
-        public int DefaultConsumerThreadCount { get; set; }
-    }
-    public class InMemoryMessageBus : IMessageBus
+
+
+    public class InMemoryMessageBusOld : IMessageBus
     {
         private IServiceProvider _serviceProvider;
-        private ILogger<InMemoryMessageBus> _logger;
+        private ILogger<InMemoryMessageBusOld> _logger;
 
         private CancellationToken _cancellationToken;
-        InMemoryMessageBusOptions _options;
 
         ConcurrentDictionary<string, List<InMemorySubscriberInfo>> _subscriberDict = new ConcurrentDictionary<string, List<InMemorySubscriberInfo>>();
-        MultithreadEventLoopGroup Eventloop;
 
-        public InMemoryMessageBus(IServiceProvider serviceProvider, ILogger<InMemoryMessageBus> logger, InMemoryMessageBusOptions options)
+        public InMemoryMessageBusOld(IServiceProvider serviceProvider, ILogger<InMemoryMessageBusOld> logger)
         {
             _serviceProvider = serviceProvider;
             _logger = logger;
-            _options = options;
-            Eventloop = new MultithreadEventLoopGroup(_options.DefaultConsumerThreadCount);
-            Eventloop.Start();
         }
 
-        public async Task PublishAsync(Type messageType, object message)
-        {
-            await this.PublishDelayAsync(messageType, message, TimeSpan.Zero);
-        }
-
-        public async Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
+        public Task PublishAsync(Type messageType, object message)
         {
             AssertUtils.IsNotNull(message, "消息不能null");
             string handlerKey = GetHandlerKey(messageType);
@@ -57,27 +37,25 @@ namespace Aix.MessageBus
                 {
                     if (this._cancellationToken != null && this._cancellationToken.IsCancellationRequested)
                         continue;
-
-                    Func<Task> task = async () =>
-                   {
-                       if (this._cancellationToken != null && this._cancellationToken.IsCancellationRequested) return;
-                       await With.NoException(_logger, () =>
-                       {
-                           return item.Action(message);
-                       }, $"执行出错,{item.Type.FullName}");
-
-                   };
-                    if (delay <= TimeSpan.Zero)
+                    Task.Run(async () =>
                     {
-                        Eventloop.GetNext().Execute(task);
-                    }
-                    else
-                    {
-                        Eventloop.GetNext().Schedule(task, delay);
-                    }
+                        if (this._cancellationToken != null && this._cancellationToken.IsCancellationRequested) return;
+                        await With.NoException(_logger, () =>
+                        {
+                            return item.Action(message);
+                        }, $"执行出错,{item.Type.FullName}");
+
+                    });
                 }
             }
-            await Task.CompletedTask;
+            return Task.CompletedTask;
+        }
+
+        public async Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
+        {
+            AssertUtils.IsNotNull(message, "消息不能null");
+            await Task.Delay(delay);
+            await this.PublishAsync(messageType, message);
         }
 
         public Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default(CancellationToken)) where T : class
@@ -114,7 +92,6 @@ namespace Aix.MessageBus
 
         public void Dispose()
         {
-            Eventloop.Stop();
         }
 
         #region private 
@@ -125,5 +102,11 @@ namespace Aix.MessageBus
         }
 
         #endregion
+    }
+
+    public class InMemorySubscriberInfo
+    {
+        public Type Type { get; set; }
+        public Func<object, Task> Action { get; set; }
     }
 }

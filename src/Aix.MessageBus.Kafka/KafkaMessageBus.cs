@@ -43,7 +43,7 @@ namespace Aix.MessageBus.Kafka
 
         public  Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
         {
-            throw new NotImplementedException("kafka未实现延迟任务"); //建议使用数据库实现或数据库实现 或 数据库加redis实现
+            throw new NotImplementedException("kafka未实现延迟任务"); //建议使用数据库实现或 数据库加redis实现
             //AssertUtils.IsNotNull(message, "消息不能null");
             //if (delay > TimeSpan.Zero)
             //{

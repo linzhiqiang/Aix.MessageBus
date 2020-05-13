@@ -13,6 +13,7 @@ namespace Aix.MessageBus.RabbitMQ
         /// </summary>
         private static Dictionary<int, string> DefaultDelayQueueConfig = new Dictionary<int, string>
         {
+           //  { (int)TimeSpan.FromSeconds(1).TotalSeconds,"1s"},
             { (int)TimeSpan.FromSeconds(5).TotalSeconds,"5s"},
             { (int)TimeSpan.FromSeconds(30).TotalSeconds,"30s"},
             { (int)TimeSpan.FromMinutes(1).TotalSeconds,"1m"},

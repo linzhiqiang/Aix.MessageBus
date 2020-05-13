@@ -1,6 +1,5 @@
 ﻿using Aix.MessageBus;
 using Aix.MessageBus.Exceptions;
-using Aix.MessageBus.Kafka;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;

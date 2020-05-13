@@ -1,5 +1,5 @@
 ﻿using Aix.MessageBus;
-using Aix.MessageBus.Redis;
+
 using Aix.MessageBus.Utils;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -25,8 +25,8 @@ namespace Sample
         {
             Task.Run(() =>
            {
-               // return ProducerDelay(cancellationToken);
-               return Producer(cancellationToken);
+               return ProducerDelay(cancellationToken);
+               //return Producer(cancellationToken);
            });
 
             return Task.CompletedTask;
@@ -75,12 +75,12 @@ namespace Sample
 
                     await With.NoException(_logger, async () =>
                     {
-                        var delay = TimeSpan.FromSeconds(DelaySeconds[i % DelaySeconds.Length]);
+                        var delay = TimeSpan.FromSeconds(i+1);// TimeSpan.FromSeconds(DelaySeconds[i % DelaySeconds.Length]);
                         var delayDatetime = DateTime.Now.Add(delay);
                         var messageId = (i + 1).ToString();
                         var messageData = new BusinessMessage { MessageId = messageId, Content = $"我是内容_{messageId}", CreateTime = delayDatetime };
-                        //  await _messageBus.PublishDelayAsync<BusinessMessage>(messageData, delay);
-                        await _messageBus.PublishAsync(typeof(BusinessMessage), messageData);
+                        await _messageBus.PublishDelayAsync<BusinessMessage>(messageData, delay);
+                        //await _messageBus.PublishAsync(typeof(BusinessMessage), messageData);
                         //await _messageBus.PublishCrontabAsync<BusinessMessage>(messageData,new CrontabJobInfo {
                         //     JobId="test",
                         //      JobName="test",

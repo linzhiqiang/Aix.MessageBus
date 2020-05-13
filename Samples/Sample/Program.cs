@@ -63,7 +63,8 @@ namespace Sample
                     switch (messagebusType)
                     {
                         case 0:
-                            services.AddInMemoryMessageBus();
+                             var memoryMessageBusOptions = context.Configuration.GetSection("memoryMessageBus").Get<InMemoryMessageBusOptions>();
+                            services.AddInMemoryMessageBus(memoryMessageBusOptions);
                             break;
                         case 1:
                             var kafkaMessageBusOptions = context.Configuration.GetSection("kafka").Get<KafkaMessageBusOptions>();
@@ -146,8 +147,8 @@ namespace Sample
 
         private static void AddInMemoryMessageBus(IServiceCollection services)
         {
-           // var options = new InMemoryMessageBusOptions();
-            services.AddInMemoryMessageBus();
+            var options = new InMemoryMessageBusOptions();
+            services.AddInMemoryMessageBus(options);
         }
 
     }
