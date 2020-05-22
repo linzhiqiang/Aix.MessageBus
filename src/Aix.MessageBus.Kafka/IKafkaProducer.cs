@@ -10,8 +10,5 @@ namespace Aix.MessageBus.Kafka
     internal interface IKafkaProducer<TKey, TValue> : IDisposable
     {
         Task<DeliveryResult<TKey, TValue>> ProduceAsync(string topic, Message<TKey, TValue> message);
-
-        //Task<DeliveryResult<TKey, TValue>> ProduceDelayAsync(string topic, Message<TKey, TValue> message, TimeSpan delay);
-        
     }
 }

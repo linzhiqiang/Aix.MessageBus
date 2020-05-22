@@ -44,17 +44,6 @@ namespace Aix.MessageBus.Kafka
         public  Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
         {
             throw new NotImplementedException("kafka未实现延迟任务"); //建议使用数据库实现或 数据库加redis实现
-            //AssertUtils.IsNotNull(message, "消息不能null");
-            //if (delay > TimeSpan.Zero)
-            //{
-            //    var topic = GetTopic(messageType);
-            //    var data = new KafkaMessageBusData { Topic = topic, Data = _kafkaOptions.Serializer.Serialize(message) };
-            //    await _producer.ProduceDelayAsync(topic, new Message<Null, KafkaMessageBusData> { Value = data }, delay);
-            //}
-            //else
-            //{
-            //    await PublishAsync(messageType, message);
-            //}
         }
         public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
