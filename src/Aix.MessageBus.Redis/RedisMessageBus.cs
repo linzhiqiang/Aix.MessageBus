@@ -144,8 +144,8 @@ namespace Aix.MessageBus.Redis
             }
 
             context = context ?? new MessageBusContext();
-            var threadCountStr = context.Config.GetValue("consumer.thread.count", "ConsumerThreadCount");
-            var threadCount = !string.IsNullOrEmpty(threadCountStr) ? int.Parse(threadCountStr) : _options.DefaultConsumerThreadCount;
+            int.TryParse(context.Config.GetValue(MessageBusContextConstant.ConsumerThreadCount),out int threadCount);
+             threadCount = threadCount>0 ? threadCount : _options.DefaultConsumerThreadCount;
             AssertUtils.IsTrue(threadCount > 0, "消费者线程数必须大于0");
             _logger.LogInformation($"订阅[{topic}],threadcount={threadCount}");
 
@@ -185,7 +185,15 @@ namespace Aix.MessageBus.Redis
 
         private string GetTopic(Type type)
         {
-            return $"{_options.TopicPrefix ?? ""}{type.Name}";
+            string topicName = type.Name;
+
+            var topicAttr = TopicAttribute.GetTopicAttribute(type);
+            if (topicAttr != null && !string.IsNullOrEmpty(topicAttr.Name))
+            {
+                topicName = topicAttr.Name;
+            }
+
+            return $"{_options.TopicPrefix ?? ""}{topicName}";
         }
 
 

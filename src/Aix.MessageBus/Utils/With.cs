@@ -17,7 +17,8 @@ namespace Aix.MessageBus.Utils
             }
             catch (Exception ex)
             {
-                logger.LogError($"{message}, {ex.Message}, {ex.StackTrace}");
+                //logger.LogError($"{message}, {ex.Message}, {ex.StackTrace}");
+                logger.LogError(ex, message);
             }
         }
 
@@ -30,7 +31,7 @@ namespace Aix.MessageBus.Utils
             }
             catch (Exception ex)
             {
-                logger.LogError($"{message}, {ex.Message}, {ex.StackTrace}");
+                logger.LogError(ex, message);
             }
         }
 
@@ -58,7 +59,7 @@ namespace Aix.MessageBus.Utils
                     if (index < reTryCount) logger.LogError($"{operationName}出错后重试，第{index}次");
                     if (index == reTryCount)
                     {
-                        logger.LogError($"{operationName}重试{reTryCount}次失败, {ex.Message}, {ex.StackTrace}");
+                        logger.LogError(ex,$"{operationName}重试{reTryCount}次失败");
                         throw ex;
                     }
                 }
@@ -90,7 +91,7 @@ namespace Aix.MessageBus.Utils
                     if (index < reTryCount) logger.LogError($"{operationName}出错后重试，第{index}次");
                     if (index == reTryCount)
                     {
-                        logger.LogError($"{operationName}重试{reTryCount}次失败, {ex.Message}, {ex.StackTrace}");
+                        logger.LogError(ex, $"{operationName}重试{reTryCount}次失败");
                         throw ex;
                     }
                 }

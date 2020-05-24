@@ -1,7 +1,7 @@
 ﻿using Confluent.Kafka;
 using System;
 
-namespace Aix.MessageBus.Kafka
+namespace Aix.MessageBus.Kafka.Impl
 {
     /// <summary>
     /// kafka序列化适配  转化为Confluent.Kafka的api要求

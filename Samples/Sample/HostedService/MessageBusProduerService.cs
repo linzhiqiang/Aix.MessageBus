@@ -25,8 +25,10 @@ namespace Sample
         {
             Task.Run(() =>
            {
-               return ProducerDelay(cancellationToken);
-               //return Producer(cancellationToken);
+               Producer(cancellationToken);
+               //ProducerDelay(cancellationToken);
+
+               return Task.CompletedTask;
            });
 
             return Task.CompletedTask;
@@ -75,7 +77,7 @@ namespace Sample
 
                     await With.NoException(_logger, async () =>
                     {
-                        var delay = TimeSpan.FromSeconds(i+1);// TimeSpan.FromSeconds(DelaySeconds[i % DelaySeconds.Length]);
+                        var delay = TimeSpan.FromSeconds(i + 1);// TimeSpan.FromSeconds(DelaySeconds[i % DelaySeconds.Length]);
                         var delayDatetime = DateTime.Now.Add(delay);
                         var messageId = (i + 1).ToString();
                         var messageData = new BusinessMessage { MessageId = messageId, Content = $"我是内容_{messageId}", CreateTime = delayDatetime };

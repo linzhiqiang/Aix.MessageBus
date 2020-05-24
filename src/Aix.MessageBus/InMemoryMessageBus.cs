@@ -10,17 +10,16 @@ using System.Threading.Tasks;
 
 namespace Aix.MessageBus
 {
-
     public class InMemoryMessageBusOptions
     {
         public InMemoryMessageBusOptions()
         {
-            DefaultConsumerThreadCount = 1;
+            ConsumerThreadCount = 4;
         }
         /// <summary>
-        /// 默认消费线程数 默认1个
+        /// 默认消费线程数 默认4个
         /// </summary>
-        public int DefaultConsumerThreadCount { get; set; }
+        public int ConsumerThreadCount { get; set; }
     }
     public class InMemoryMessageBus : IMessageBus
     {
@@ -38,7 +37,7 @@ namespace Aix.MessageBus
             _serviceProvider = serviceProvider;
             _logger = logger;
             _options = options;
-            Eventloop = new MultithreadEventLoopGroup(_options.DefaultConsumerThreadCount);
+            Eventloop = new MultithreadEventLoopGroup(_options.ConsumerThreadCount);
             Eventloop.Start();
         }
 

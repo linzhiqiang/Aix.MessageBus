@@ -28,9 +28,10 @@ namespace Aix.MessageBus.Kafka.Impl
         /// <summary>
         /// 存储每个分区的最大offset，针对手工提交 
         /// </summary>
-        private ConcurrentDictionary<TopicPartition, TopicPartitionOffset> _offsetDict = new ConcurrentDictionary<TopicPartition, TopicPartitionOffset>();
+        private ConcurrentDictionary<TopicPartition, TopicPartitionOffset> _currentOffsets = new ConcurrentDictionary<TopicPartition, TopicPartitionOffset>();
         private volatile bool _isStart = false;
         private int Count = 0;
+        private DateTime LastCommitTime = DateTime.MaxValue;
 
         public event Func<ConsumeResult<TKey, TValue>, Task> OnMessage;
         public KafkaConsumer(IServiceProvider serviceProvider)
@@ -56,16 +57,11 @@ namespace Aix.MessageBus.Kafka.Impl
         {
             this._isStart = false;
             _logger.LogInformation("Kafka关闭消费者");
-            With.NoException(_logger, () =>
-            {
-                if (EnableAutoCommit() == false)
-                {
-                    this._consumer.Commit();
-                }
-            }, "关闭消费者时提交偏移量");
-
+            ManualCommitOffset();
             With.NoException(_logger, () => { this._consumer?.Close(); }, "关闭消费者");
         }
+
+
 
         public void Dispose()
         {
@@ -79,9 +75,9 @@ namespace Aix.MessageBus.Kafka.Impl
             Task.Factory.StartNew(async () =>
             {
                 _logger.LogInformation("开始消费数据...");
+                LastCommitTime = DateTime.Now;
                 try
                 {
-
                     while (_isStart && !cancellationToken.IsCancellationRequested)
                     {
                         try
@@ -118,17 +114,25 @@ namespace Aix.MessageBus.Kafka.Impl
 
         private async Task Consumer()
         {
-            var result = this._consumer.Consume(TimeSpan.FromSeconds(1));
-            // if (result == null || result.IsPartitionEOF || result.Value == null)
-            if (result == null || result.IsPartitionEOF || result.Message==null ||  result.Message.Value == null)
+            try
             {
-                return;
-            }
-            //消费数据
-            await Handler(result);
+                var result = this._consumer.Consume(TimeSpan.FromSeconds(1));
+                //这里处理超时提交
+                // if (result == null || result.IsPartitionEOF || result.Value == null)
+                if (result == null || result.IsPartitionEOF || result.Message == null || result.Message.Value == null)
+                {
+                    return;
+                }
+                //消费数据
+                await Handler(result);
 
-            //处理手动提交
-            ManualCommitOffset(result); //采用后提交（至少一次）,消费前提交（至多一次）
+                //处理手动提交
+                ManualCommitOffset(result); //采用后提交（至少一次）,消费前提交（至多一次）
+            }
+            finally
+            {
+                ManualTimeoutCommitOffset();
+            }
         }
 
 
@@ -148,14 +152,57 @@ namespace Aix.MessageBus.Kafka.Impl
 
                 if (Count % _kafkaOptions.ManualCommitBatch == 0)
                 {
-                    _offsetDict.TryGetValue(topicPartition, out TopicPartitionOffset maxOffset); //取出最大的offset提交，可能并发当前的不是最大的
-                    With.NoException(_logger, () =>
-                    {
-                        this._consumer.Commit(new[] { maxOffset });
-                    }, "手动提交偏移量");
-                    Count = 0;
+                    ManualCommitOffset();
                 }
             }
+        }
+
+        /// <summary>
+        /// 超过配置时间提交
+        /// </summary>
+        private void ManualTimeoutCommitOffset()
+        {
+            if (_kafkaOptions.ManualCommitIntervalSecond > 0 && EnableAutoCommit() == false)
+            {
+                var isTimeout = (DateTime.Now - LastCommitTime).TotalSeconds > _kafkaOptions.ManualCommitIntervalSecond;
+                if (isTimeout)
+                {
+                    ManualCommitOffset();
+                }
+            }
+        }
+
+        /// <summary>
+        /// 提交所有分区
+        /// </summary>
+        private void ManualCommitOffset()
+        {
+            With.NoException(_logger, () =>
+            {
+                //foreach (var item in _currentOffsets)
+                //{
+                //    // _logger.LogInformation($"--------------------手动提交偏移量分区：{ item.Key.Partition.Value}----------------");
+                //    With.NoException(_logger, () =>
+                //    {
+                //        this._consumer.Commit(new[] { item.Value });
+                //    }, $"手动提交偏移量分区：{item.Key.Partition.Value}");
+                //}
+
+                if (_currentOffsets.Count > 0)
+                {
+                    LastCommitTime = DateTime.Now;
+                    // _logger.LogInformation($"--------------------手动提交偏移量分区：{ string.Join(",", _currentOffsets.Values)}----------------");
+                    this._consumer.Commit(_currentOffsets.Values);
+                }
+            }, "手动提交所有分区错误");
+
+            ClearCurrentOffsets();
+        }
+
+        private void ClearCurrentOffsets()
+        {
+            Count = 0;
+            _currentOffsets.Clear();
         }
 
         private async Task Handler(ConsumeResult<TKey, TValue> consumeResult)
@@ -174,7 +221,7 @@ namespace Aix.MessageBus.Kafka.Impl
         }
         private void AddToOffsetDict(TopicPartition topicPartition, TopicPartitionOffset TopicPartitionOffset)
         {
-            _offsetDict.AddOrUpdate(topicPartition, TopicPartitionOffset, (key, oldValue) =>
+            _currentOffsets.AddOrUpdate(topicPartition, TopicPartitionOffset, (key, oldValue) =>
             {
                 return TopicPartitionOffset.Offset > oldValue.Offset ? TopicPartitionOffset : oldValue;
             });
@@ -198,7 +245,7 @@ namespace Aix.MessageBus.Kafka.Impl
                 throw new Exception("请配置BootstrapServers参数");
             }
 
-            var config = new Dictionary<string, string>();
+            var config = new Dictionary<string, string>(); //这里转成字典 便于不同消费者可以改变消费者配置（因为是就一个配置对象）
             lock (_kafkaOptions.ConsumerConfig)
             {
                 config = _kafkaOptions.ConsumerConfig.ToDictionary(x => x.Key, v => v.Value);
@@ -220,26 +267,18 @@ namespace Aix.MessageBus.Kafka.Impl
                  .SetPartitionsRevokedHandler((c, partitions) =>
                  {
                      //方法会在再均衡开始之前和消费者停止读取消息之后被调用。如果在这里提交偏移量，下一个接管partition的消费者就知道该从哪里开始读取了。
-                     //Console.WriteLine($"Revoking assignment: [{string.Join(", ", partitions)}]");
+                     //partitions表示再均衡前所分配的分区
                      if (EnableAutoCommit() == false)
                      {
-                         //只提交当前消费者分配的分区
-                         With.NoException(_logger, () =>
-                         {
-                             c.Commit(_offsetDict.Values.Where(x => partitions.Exists(current => current.Topic == x.Topic && current.Partition == x.Partition)));
-                             _logger.LogInformation("Kafka再均衡提交");
-                             // _offsetDict.Clear();
-                             ClearTopicDataOffset(partitions.Select(x => x.Topic).Distinct().ToList());
-                         }, "Kafka再均衡提交");
-
+                         ManualCommitOffset();
                      }
                  })
                  .SetPartitionsAssignedHandler((c, partitions) =>
                  {
+                     //方法会在重新分配partition之后和消费者开始读取消息之前被调用。
                      if (EnableAutoCommit() == false)
                      {
-                         //_offsetDict.Clear();
-                         ClearTopicDataOffset(partitions.Select(x => x.Topic).Distinct().ToList());
+                         ClearCurrentOffsets();
                      }
                      _logger.LogInformation($"MemberId:{c.MemberId}分配的分区：Assigned partitions: [{string.Join(", ", partitions)}]");
                  })
@@ -247,21 +286,6 @@ namespace Aix.MessageBus.Kafka.Impl
                .Build();
 
             return consumer;
-        }
-
-        private void ClearTopicDataOffset(List<string> topicList)
-        {
-            foreach (var topic in topicList)
-            {
-                foreach (var item in _offsetDict.ToList())
-                {
-                    if (item.Key.Topic == topic)
-                    {
-                        _offsetDict.TryRemove(item.Key, out TopicPartitionOffset value);
-                    }
-                }
-            }
-
         }
 
         /// <summary>
@@ -273,7 +297,6 @@ namespace Aix.MessageBus.Kafka.Impl
             var enableAutoCommit = this._kafkaOptions.ConsumerConfig.EnableAutoCommit;
             return !enableAutoCommit.HasValue || enableAutoCommit.Value == true;
         }
-
 
         #endregion
     }

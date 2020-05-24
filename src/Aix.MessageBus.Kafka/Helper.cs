@@ -9,7 +9,15 @@ namespace Aix.MessageBus.Kafka
     {
         public static string GetTopic(KafkaMessageBusOptions options, Type type)
         {
-            return $"{options.TopicPrefix ?? ""}{type.Name}";
+            string topicName = type.Name;
+
+            var topicAttr = TopicAttribute.GetTopicAttribute(type);
+            if (topicAttr != null && !string.IsNullOrEmpty(topicAttr.Name))
+            {
+                topicName = topicAttr.Name;
+            }
+            
+            return $"{options.TopicPrefix ?? ""}{topicName}";
         }
     }
 }

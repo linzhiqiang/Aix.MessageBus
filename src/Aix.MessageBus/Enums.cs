@@ -4,8 +4,6 @@ using System.Text;
 
 namespace Aix.MessageBus
 {
-
-
     public enum ConsumerMode
     {
         /// <summary>

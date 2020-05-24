@@ -49,7 +49,7 @@ namespace Aix.MessageBus.RabbitMQ
 
         public async Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
         {
-            AssertUtils.IsNotNull(message,"消息不能null");
+            AssertUtils.IsNotNull(message, "消息不能null");
             if (delay > TimeSpan.Zero)
             { //加入延迟队列
                 var topic = GetTopic(messageType);
@@ -69,10 +69,10 @@ namespace Aix.MessageBus.RabbitMQ
             var topic = GetTopic(typeof(T));
 
             context = context ?? new MessageBusContext();
-            var groupId = context.Config.GetValue("group.id", "groupid") ?? string.Empty;
+            var groupId = context.Config.GetValue(MessageBusContextConstant.GroupId) ?? string.Empty;
 
-            var threadCountStr = context.Config.GetValue("consumer.thread.count", "ConsumerThreadCount");
-            var threadCount = !string.IsNullOrEmpty(threadCountStr) ? int.Parse(threadCountStr) : _options.DefaultConsumerThreadCount;
+            int.TryParse(context.Config.GetValue(MessageBusContextConstant.ConsumerThreadCount), out int threadCount);
+            threadCount = threadCount > 0 ? threadCount : _options.DefaultConsumerThreadCount;
             AssertUtils.IsTrue(threadCount > 0, "消费者线程数必须大于0");
 
             var key = !string.IsNullOrEmpty(groupId) ? $"{topic}_{groupId}" : topic;
@@ -132,7 +132,14 @@ namespace Aix.MessageBus.RabbitMQ
 
         private string GetTopic(Type type)
         {
-            return $"{_options.TopicPrefix ?? ""}{type.Name}";
+            string topicName = type.Name;
+
+            var topicAttr = TopicAttribute.GetTopicAttribute(type);
+            if (topicAttr != null && !string.IsNullOrEmpty(topicAttr.Name))
+            {
+                topicName = topicAttr.Name;
+            }
+            return $"{_options.TopicPrefix ?? ""}{topicName}";
         }
 
 

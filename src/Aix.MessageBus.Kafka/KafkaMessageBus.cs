@@ -10,6 +10,9 @@ using System.Threading.Tasks;
 
 namespace Aix.MessageBus.Kafka
 {
+    /// <summary>
+    /// kafka实现messagebus
+    /// </summary>
     public class KafkaMessageBus : IMessageBus
     {
         #region 属性 构造
@@ -18,7 +21,6 @@ namespace Aix.MessageBus.Kafka
         private KafkaMessageBusOptions _kafkaOptions;
         IKafkaProducer<Null, KafkaMessageBusData> _producer = null;
         List<IKafkaConsumer<Null, KafkaMessageBusData>> _consumerList = new List<IKafkaConsumer<Null, KafkaMessageBusData>>();
-        private CancellationToken _cancellationToken = default(CancellationToken);
 
         private HashSet<string> Subscribers = new HashSet<string>();
 
@@ -33,6 +35,7 @@ namespace Aix.MessageBus.Kafka
             this._producer = new KafkaProducer<Null, KafkaMessageBusData>(this._serviceProvider);
         }
 
+        #region IMessageBus
         public async Task PublishAsync(Type messageType, object message)
         {
             AssertUtils.IsNotNull(message, "消息不能null");
@@ -41,33 +44,32 @@ namespace Aix.MessageBus.Kafka
             await _producer.ProduceAsync(topic, new Message<Null, KafkaMessageBusData> { Value = data });
         }
 
-        public  Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
+        public Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
         {
             throw new NotImplementedException("kafka未实现延迟任务"); //建议使用数据库实现或 数据库加redis实现
         }
+
+        
         public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
             string topic = GetTopic(typeof(T));
 
             context = context ?? new MessageBusContext();
-            var groupId = context.Config.GetValue("group.id", "groupid");
-            groupId = !string.IsNullOrEmpty(groupId) ? groupId : _kafkaOptions.DefaultConsumerGroupId;
+            var groupId = context.Config.GetValue(MessageBusContextConstant.GroupId); //这里可以传不同的groupid，订阅相同对象
+            groupId = !string.IsNullOrEmpty(groupId) ? groupId : _kafkaOptions.ConsumerConfig.GroupId;
 
-            var threadCountStr = context.Config.GetValue("consumer.thread.count", "ConsumerThreadCount");
-            var threadCount = !string.IsNullOrEmpty(threadCountStr) ? int.Parse(threadCountStr) : _kafkaOptions.DefaultConsumerThreadCount;
+            int.TryParse(context.Config.GetValue(MessageBusContextConstant.ConsumerThreadCount), out int threadCount);
+            threadCount = threadCount > 0 ? threadCount : _kafkaOptions.DefaultConsumerThreadCount;
             AssertUtils.IsTrue(threadCount > 0, "消费者线程数必须大于0");
 
-            var key = $"{topic}_{groupId}";
-            AssertUtils.IsTrue(!Subscribers.Contains(key), "重复订阅");
-            Subscribers.Add(key);
+            ValidateSubscribe(topic, groupId);
 
-            _logger.LogInformation($"订阅[{topic}]：groupid:{groupId},threadcount={threadCount}");
+            _logger.LogInformation($"-------------订阅[topic:{topic}]：groupid:{groupId},threadcount:{threadCount}-------------");
             for (int i = 0; i < threadCount; i++)
             {
                 var consumer = new KafkaConsumer<Null, KafkaMessageBusData>(_serviceProvider);
                 consumer.OnMessage += consumeResult =>
                 {
-                    if (this._cancellationToken.IsCancellationRequested) return Task.CompletedTask;
                     return With.NoException(_logger, async () =>
                     {
                         var obj = _kafkaOptions.Serializer.Deserialize<T>(consumeResult.Message.Value.Data);
@@ -91,8 +93,18 @@ namespace Aix.MessageBus.Kafka
             }
         }
 
-        #region private
+        #endregion
 
+        #region private
+        private void ValidateSubscribe(string topic, string groupId)
+        {
+            lock (Subscribers)
+            {
+                var key = $"{topic}_{groupId}";
+                AssertUtils.IsTrue(!Subscribers.Contains(key), "重复订阅");
+                Subscribers.Add(key);
+            }
+        }
         private string GetTopic(Type type)
         {
             return Helper.GetTopic(_kafkaOptions, type);

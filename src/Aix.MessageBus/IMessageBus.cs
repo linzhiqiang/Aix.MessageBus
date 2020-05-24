@@ -6,26 +6,9 @@ using System.Threading.Tasks;
 
 namespace Aix.MessageBus
 {
-
-    public  class MessageBusContext
-    {
-        public static MessageBusContext Default = new MessageBusContext();
-
-        private IDictionary<string, string> _config;
-
-        /// <summary>
-        /// 具体实现需要的个性配置 如kafka实现，redis实现，rabbitmq实现
-        /// </summary>
-        public IDictionary<string, string> Config
-        {
-            get
-            {
-                if (_config == null) _config = new Dictionary<string, string>(StringComparer.CurrentCultureIgnoreCase);
-                return _config;
-            }
-        }
-    }
-
+    /// <summary>
+    /// 消息发布订阅接口 目前实现由kafka,rabbitmq,redis
+    /// </summary>
     public interface IMessageBus : IDisposable
     {
         /// <summary>
@@ -37,7 +20,7 @@ namespace Aix.MessageBus
         Task PublishAsync(Type messageType, object message);
 
         /// <summary>
-        /// 发布延迟消息
+        /// 发布延迟消息 kafka未实现,rabbitmq已实现,redis已实现
         /// </summary>
         /// <param name="messageType"></param>
         /// <param name="message"></param>

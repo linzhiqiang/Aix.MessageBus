@@ -19,6 +19,7 @@ namespace Aix.MessageBus.Foundation.EventLoop
         }
         public MultithreadEventLoopGroup(int threadCount)
         {
+            threadCount = threadCount > 0 ? threadCount : DefaultEventLoopThreadCount;
             this.EventLoops = new IEventExecutor[threadCount];
             for (int i = 0; i < threadCount; i++)
             {
