@@ -21,4 +21,9 @@ namespace Aix.MessageBus
             return attrs != null && attrs.Length > 0 ? attrs[0] as TopicAttribute : null;
         }
     }
+
+    public class RouteKeyAttribute : Attribute
+    {
+
+    }
 }

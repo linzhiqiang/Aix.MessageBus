@@ -77,7 +77,7 @@ namespace Aix.MessageBus.Redis
             AssertUtils.IsTrue(result, $"redis生产定时任务失败,topic:{crontabJobData.Topic}");
         }
 
-        public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default(CancellationToken)) where T : class
+        public async Task SubscribeAsync<T>(Func<T, Task> handler, SubscribeOptions subscribeOptions = null, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
             InitProcess();
             var topic = GetTopic(typeof(T));
@@ -103,7 +103,7 @@ namespace Aix.MessageBus.Redis
                 }
             }
 
-            await SubscribeRedis(topic, context, cancellationToken);
+            await SubscribeRedis(topic, subscribeOptions, cancellationToken);
         }
 
         public void Dispose()
@@ -130,11 +130,11 @@ namespace Aix.MessageBus.Redis
                 await _processExecuter.AddProcess(new DelayedWorkProcess(_serviceProvider), "redis延迟任务处理");
                 await _processExecuter.AddProcess(new ErrorWorkerProcess(_serviceProvider), "redis失败任务处理");
                 await _processExecuter.AddProcess(new CrontabWorkProcess(_serviceProvider), "redis定时任务处理");
-                
+
             });
         }
 
-        private async Task SubscribeRedis(string topic, MessageBusContext context, CancellationToken cancellationToken)
+        private async Task SubscribeRedis(string topic, SubscribeOptions subscribeOptions, CancellationToken cancellationToken)
         {
             if (Subscribers.Contains(topic)) return; //同一主题订阅一次即可
             lock (Subscribers)
@@ -143,9 +143,9 @@ namespace Aix.MessageBus.Redis
                 Subscribers.Add(topic);
             }
 
-            context = context ?? new MessageBusContext();
-            int.TryParse(context.Config.GetValue(MessageBusContextConstant.ConsumerThreadCount),out int threadCount);
-             threadCount = threadCount>0 ? threadCount : _options.DefaultConsumerThreadCount;
+            subscribeOptions = subscribeOptions ?? new SubscribeOptions();
+            var threadCount = subscribeOptions.ConsumerThreadCount;
+            threadCount = threadCount > 0 ? threadCount : _options.DefaultConsumerThreadCount;
             AssertUtils.IsTrue(threadCount > 0, "消费者线程数必须大于0");
             _logger.LogInformation($"订阅[{topic}],threadcount={threadCount}");
 

@@ -63,15 +63,14 @@ namespace Aix.MessageBus.RabbitMQ
             }
         }
 
-        public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default(CancellationToken)) where T : class
+        public async Task SubscribeAsync<T>(Func<T, Task> handler, SubscribeOptions subscribeOptions = null, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
             InitDelayQueue();
             var topic = GetTopic(typeof(T));
 
-            context = context ?? new MessageBusContext();
-            var groupId = context.Config.GetValue(MessageBusContextConstant.GroupId) ?? string.Empty;
+            var groupId = subscribeOptions?.GroupId;
 
-            int.TryParse(context.Config.GetValue(MessageBusContextConstant.ConsumerThreadCount), out int threadCount);
+            var threadCount = subscribeOptions?.ConsumerThreadCount ?? 0;
             threadCount = threadCount > 0 ? threadCount : _options.DefaultConsumerThreadCount;
             AssertUtils.IsTrue(threadCount > 0, "消费者线程数必须大于0");
 

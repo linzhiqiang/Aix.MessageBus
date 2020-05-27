@@ -8,6 +8,7 @@ namespace Sample
     [TopicAttribute(Name = "BusinessMessage")]
     public class BusinessMessage
     {
+        [RouteKeyAttribute]
         public string MessageId { get; set; }
         public string Content { get; set; }
 

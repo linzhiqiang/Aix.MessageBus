@@ -19,8 +19,8 @@ namespace Aix.MessageBus.Kafka
         private IServiceProvider _serviceProvider;
         private ILogger<KafkaMessageBus> _logger;
         private KafkaMessageBusOptions _kafkaOptions;
-        IKafkaProducer<Null, KafkaMessageBusData> _producer = null;
-        List<IKafkaConsumer<Null, KafkaMessageBusData>> _consumerList = new List<IKafkaConsumer<Null, KafkaMessageBusData>>();
+        IKafkaProducer<string, KafkaMessageBusData> _producer = null;
+        List<IKafkaConsumer<string, KafkaMessageBusData>> _consumerList = new List<IKafkaConsumer<string, KafkaMessageBusData>>();
 
         private HashSet<string> Subscribers = new HashSet<string>();
 
@@ -32,7 +32,7 @@ namespace Aix.MessageBus.Kafka
             _logger = logger;
             _kafkaOptions = kafkaOptions;
 
-            this._producer = new KafkaProducer<Null, KafkaMessageBusData>(this._serviceProvider);
+            this._producer = new KafkaProducer<string, KafkaMessageBusData>(this._serviceProvider);
         }
 
         #region IMessageBus
@@ -41,7 +41,8 @@ namespace Aix.MessageBus.Kafka
             AssertUtils.IsNotNull(message, "消息不能null");
             var topic = GetTopic(messageType);
             var data = new KafkaMessageBusData { Topic = topic, Data = _kafkaOptions.Serializer.Serialize(message) };
-            await _producer.ProduceAsync(topic, new Message<Null, KafkaMessageBusData> { Value = data });
+            var keyValue = AttributeUtils.GetPropertyValue<RouteKeyAttribute>(message);
+            await _producer.ProduceAsync(topic, new Message<string, KafkaMessageBusData> { Key = keyValue?.ToString(), Value = data });
         }
 
         public Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
@@ -49,16 +50,14 @@ namespace Aix.MessageBus.Kafka
             throw new NotImplementedException("kafka未实现延迟任务"); //建议使用数据库实现或 数据库加redis实现
         }
 
-        
-        public async Task SubscribeAsync<T>(Func<T, Task> handler, MessageBusContext context = null, CancellationToken cancellationToken = default(CancellationToken)) where T : class
+        public async Task SubscribeAsync<T>(Func<T, Task> handler, SubscribeOptions subscribeOptions = null, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
             string topic = GetTopic(typeof(T));
 
-            context = context ?? new MessageBusContext();
-            var groupId = context.Config.GetValue(MessageBusContextConstant.GroupId); //这里可以传不同的groupid，订阅相同对象
+            var groupId = subscribeOptions?.GroupId;
             groupId = !string.IsNullOrEmpty(groupId) ? groupId : _kafkaOptions.ConsumerConfig.GroupId;
 
-            int.TryParse(context.Config.GetValue(MessageBusContextConstant.ConsumerThreadCount), out int threadCount);
+            var threadCount = subscribeOptions?.ConsumerThreadCount ?? 0;
             threadCount = threadCount > 0 ? threadCount : _kafkaOptions.DefaultConsumerThreadCount;
             AssertUtils.IsTrue(threadCount > 0, "消费者线程数必须大于0");
 
@@ -67,7 +66,7 @@ namespace Aix.MessageBus.Kafka
             _logger.LogInformation($"-------------订阅[topic:{topic}]：groupid:{groupId},threadcount:{threadCount}-------------");
             for (int i = 0; i < threadCount; i++)
             {
-                var consumer = new KafkaConsumer<Null, KafkaMessageBusData>(_serviceProvider);
+                var consumer = new KafkaConsumer<string, KafkaMessageBusData>(_serviceProvider);
                 consumer.OnMessage += consumeResult =>
                 {
                     return With.NoException(_logger, async () =>
