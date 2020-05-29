@@ -72,14 +72,11 @@ namespace Sample
                             break;
                         case 2:
                             var redisMessageBusOptions = context.Configuration.GetSection("redis-messagebus").Get<RedisMessageBusOptions>();
-                            redisMessageBusOptions.RetryStrategy = new int[] { 1,1,1,1,1,1,1};
                             services.AddRedisMessageBus(redisMessageBusOptions); //list实现
                             //services.AddRedisMessageBusPubSub(redisMessageBusOptions);//发布订阅实现
                             break;
                         case 3:
                             var rabbitMQMessageBusOptions = context.Configuration.GetSection("rabbitmq").Get<RabbitMQMessageBusOptions>();
-                            rabbitMQMessageBusOptions.RetryStrategy = new int[] { 0, 5, 10, 10, 10 }; //new int[] { 0, 5, 10, 60, 180 };
-                            rabbitMQMessageBusOptions.MaxErrorReTryCount = 5;
                             services.AddRabbitMQMessageBus(rabbitMQMessageBusOptions);
                             break;
                         default:

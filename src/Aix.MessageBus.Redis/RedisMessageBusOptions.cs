@@ -5,9 +5,9 @@ using System.Text;
 
 namespace Aix.MessageBus.Redis
 {
-  public  class RedisMessageBusOptions
+    public class RedisMessageBusOptions
     {
-        private int[] DefaultRetryStrategy = new int[] { 1,5, 10, 30,  60,  60, 2 * 60, 2 * 60, 5 * 60, 5 * 60 };
+        private int[] DefaultRetryStrategy = new int[] { 1, 5, 10, 30, 60, 60, 2 * 60, 2 * 60, 5 * 60, 5 * 60 };
         public RedisMessageBusOptions()
         {
             this.TopicPrefix = "redis:messagebus:";
@@ -18,7 +18,6 @@ namespace Aix.MessageBus.Redis
             this.ExecuteTimeoutSecond = 60;
             this.MaxErrorReTryCount = 10;
             this.CrontabLockSecond = 60;
-            this.RetryStrategy = DefaultRetryStrategy;
         }
 
         /// <summary>
@@ -71,18 +70,15 @@ namespace Aix.MessageBus.Redis
         /// </summary>
         public int MaxErrorReTryCount { get; set; }
 
-        private int[] _retryStrategy;
         /// <summary>
-        /// 失败重试延迟策略 单位：秒  默认失败次数对应值延迟时间[ 1,5, 10, 30,  60,  60, 2 * 60, 2 * 60, 5 * 60, 5 * 60  ];
+        /// 失败重试延迟策略 单位：秒 ,不要直接调用请调用GetRetryStrategy()  默认失败次数对应值延迟时间[ 1,5, 10, 30,  60,  60, 2 * 60, 2 * 60, 5 * 60, 5 * 60  ];
         /// </summary>
-        public int[] RetryStrategy
+        public int[] RetryStrategy { get; set; }
+
+        public int[] GetRetryStrategy()
         {
-            get
-            {
-                if (_retryStrategy == null || _retryStrategy.Length == 0) _retryStrategy = DefaultRetryStrategy;
-                return _retryStrategy;
-            }
-            set { _retryStrategy = value; }
+            if (RetryStrategy == null || RetryStrategy.Length == 0) return DefaultRetryStrategy;
+            return RetryStrategy;
         }
     }
 }

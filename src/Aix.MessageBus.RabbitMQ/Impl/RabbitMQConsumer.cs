@@ -151,12 +151,12 @@ namespace Aix.MessageBus.RabbitMQ.Impl
 
         private int GetDelaySecond(int errorCount)
         {
-
-            if (errorCount < _options.RetryStrategy.Length)
+            var retryStrategy = _options.GetRetryStrategy();
+            if (errorCount < retryStrategy.Length)
             {
-                return _options.RetryStrategy[errorCount];
+                return retryStrategy[errorCount];
             }
-            return _options.RetryStrategy[_options.RetryStrategy.Length - 1];
+            return retryStrategy[retryStrategy.Length - 1];
         }
 
         private void ManualAck(bool isForce)

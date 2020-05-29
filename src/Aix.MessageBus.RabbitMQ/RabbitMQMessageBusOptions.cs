@@ -34,7 +34,7 @@ namespace Aix.MessageBus.RabbitMQ
             this.ManualCommitBatch = 10;
 
             this.MaxErrorReTryCount = 10;
-            this.RetryStrategy = DefaultRetryStrategy;
+
         }
         public string HostName { get; set; }
 
@@ -83,7 +83,7 @@ namespace Aix.MessageBus.RabbitMQ
         {
             get
             {
-                if (_delayQueueConfig == null || _delayQueueConfig.Count == 0) _delayQueueConfig = DefaultDelayQueueConfig;
+                if (_delayQueueConfig != null && _delayQueueConfig.Count == 0) _delayQueueConfig = DefaultDelayQueueConfig;
                 return _delayQueueConfig;
             }
             set { _delayQueueConfig = value; }
@@ -94,18 +94,15 @@ namespace Aix.MessageBus.RabbitMQ
         /// </summary>
         public int MaxErrorReTryCount { get; set; }
 
-        private int[] _retryStrategy;
         /// <summary>
         /// 失败重试延迟策略 单位：秒  默认失败次数对应值延迟时间[ 1,5, 10, 30,  60,  60, 2 * 60, 2 * 60, 5 * 60, 5 * 60  ];
         /// </summary>
-        public int[] RetryStrategy
+        public int[] RetryStrategy { get; set; }
+
+        public int[] GetRetryStrategy()
         {
-            get
-            {
-                if (_retryStrategy == null || _retryStrategy.Length == 0) _retryStrategy = DefaultRetryStrategy;
-                return _retryStrategy;
-            }
-            set { _retryStrategy = value; }
+            if (RetryStrategy == null || RetryStrategy.Length == 0) return DefaultRetryStrategy;
+            return RetryStrategy;
         }
 
     }

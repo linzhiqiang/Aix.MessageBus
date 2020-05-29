@@ -56,8 +56,8 @@ namespace Aix.MessageBus.Redis.BackgroundProcess
                 }
                 catch (Exception ex)
                 {
-                    string errorMsg = $"执行任务{process.GetType().FullName}异常：{ex.Message},{ex.StackTrace}";
-                    _logger.LogError(errorMsg);
+                    string errorMsg = $"执行任务{process.GetType().FullName}异常";
+                    _logger.LogError(ex,errorMsg);
                 }
 
             }

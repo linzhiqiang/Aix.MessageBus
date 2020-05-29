@@ -57,35 +57,31 @@ namespace Sample
                         var current = Interlocked.Increment(ref Count);
                         _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费--1--数据：MessageId={message.MessageId},Content={message.Content},count={current}");
                         // throw new Exception();
+                        // await Task.Delay(100);
                         // throw new RetryException();
                         await Task.CompletedTask;
-                        // await Task.Delay(100);
                     }, subscribeOptions, cancellationToken);
                 }
 
-                {
-                    //订阅
-                    SubscribeOptions subscribeOptions2 = new SubscribeOptions();
-                    subscribeOptions2.GroupId = "group2";
-                    subscribeOptions2.ConsumerThreadCount = 2;
+                //{
+                //    //订阅
+                //    SubscribeOptions subscribeOptions2 = new SubscribeOptions();
+                //    subscribeOptions2.GroupId = "group2";
+                //    subscribeOptions2.ConsumerThreadCount = 2;
 
-                    //使用默认分组
-                    await _messageBus.SubscribeAsync<BusinessMessage>(async (message) =>
-                    {
-                        var current = Interlocked.Increment(ref Count);
-                        //  _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费--2--数据：MessageId={message.MessageId},Content={message.Content},count={current}");
-                        //_logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}——{message.CreateTime.ToString("yyyy-MM-dd HH:mm:ss")}消费2数据：,count={current}");
-                        // throw new Exception();
-                        //await Task.Delay(50);
-                        // throw new RetryException();
-                        await Task.CompletedTask;
-                    }, subscribeOptions2, cancellationToken);
-                }
+                //    //使用默认分组
+                //    await _messageBus.SubscribeAsync<BusinessMessage>(async (message) =>
+                //    {
+                //        var current = Interlocked.Increment(ref Count);
+                //        _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费--2--数据：MessageId={message.MessageId},Content={message.Content},count={current}");
+                //        await Task.CompletedTask;
+                //    }, subscribeOptions2, cancellationToken);
+                //}
 
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "");
+                _logger.LogError(ex, "订阅失败");
             }
         }
 

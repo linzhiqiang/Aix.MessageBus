@@ -81,29 +81,26 @@ namespace Aix.MessageBus.Redis
         {
             InitProcess();
             var topic = GetTopic(typeof(T));
-            var subscriber = new SubscriberInfo
-            {
-                Type = typeof(T),
-                Action = (message) =>
-                {
-                    var realObj = _options.Serializer.Deserialize<T>(message);
-                    return handler(realObj);
-                }
+            ValidateSubscribe(topic);
+
+            subscribeOptions = subscribeOptions ?? new SubscribeOptions();
+            var threadCount = subscribeOptions.ConsumerThreadCount;
+            threadCount = threadCount > 0 ? threadCount : _options.DefaultConsumerThreadCount;
+            AssertUtils.IsTrue(threadCount > 0, "消费者线程数必须大于0");
+            _logger.LogInformation($"订阅[{topic}],threadcount={threadCount}");
+
+
+            Func<MessageResult, Task> action = async message => {
+                var realObj = _options.Serializer.Deserialize<T>(message.Data);
+                await handler(realObj);
             };
-
-            lock (_subscriberDict)
+            for (int i = 0; i < threadCount; i++)
             {
-                if (_subscriberDict.ContainsKey(topic))
-                {
-                    _subscriberDict[topic].Add(subscriber);
-                }
-                else
-                {
-                    _subscriberDict.TryAdd(topic, new List<SubscriberInfo> { subscriber });
-                }
+                var process = new WorkerProcess(_serviceProvider, topic);
+                await _processExecuter.AddProcess(process, $"redis即时任务处理：{topic}");
+                process.OnMessage += action;
             }
-
-            await SubscribeRedis(topic, subscribeOptions, cancellationToken);
+            backgroundProcessContext.SubscriberTopics.Add(topic);//便于ErrorProcess处理
         }
 
         public void Dispose()
@@ -134,55 +131,6 @@ namespace Aix.MessageBus.Redis
             });
         }
 
-        private async Task SubscribeRedis(string topic, SubscribeOptions subscribeOptions, CancellationToken cancellationToken)
-        {
-            if (Subscribers.Contains(topic)) return; //同一主题订阅一次即可
-            lock (Subscribers)
-            {
-                if (Subscribers.Contains(topic)) return;
-                Subscribers.Add(topic);
-            }
-
-            subscribeOptions = subscribeOptions ?? new SubscribeOptions();
-            var threadCount = subscribeOptions.ConsumerThreadCount;
-            threadCount = threadCount > 0 ? threadCount : _options.DefaultConsumerThreadCount;
-            AssertUtils.IsTrue(threadCount > 0, "消费者线程数必须大于0");
-            _logger.LogInformation($"订阅[{topic}],threadcount={threadCount}");
-
-            for (int i = 0; i < threadCount; i++)
-            {
-                var process = new WorkerProcess(_serviceProvider, topic, HandlerMessage);
-                await _processExecuter.AddProcess(process, $"redis即时任务处理：{topic}");
-            }
-            backgroundProcessContext.SubscriberTopics.Add(topic);//便于ErrorProcess处理
-        }
-
-        private async Task<bool> HandlerMessage(MessageResult result)
-        {
-            var isSuccess = true; //需要重试返回false
-            var hasHandler = _subscriberDict.TryGetValue(result.Topic, out List<SubscriberInfo> list);
-            if (!hasHandler || list == null) return isSuccess;
-
-            foreach (var item in list)
-            {
-                try
-                {
-                    await item.Action(result.Data);
-                }
-                catch (RetryException ex)
-                {
-                    _logger.LogError($"redis消费失败重试,topic:{result.Topic}, {ex.Message}, {ex.StackTrace}");
-                    isSuccess = false;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"redis消费失败,topic:{result.Topic}, {ex.Message}, {ex.StackTrace}");
-                }
-            }
-
-            return isSuccess;
-        }
-
         private string GetTopic(Type type)
         {
             string topicName = type.Name;
@@ -196,7 +144,15 @@ namespace Aix.MessageBus.Redis
             return $"{_options.TopicPrefix ?? ""}{topicName}";
         }
 
-
+        private void ValidateSubscribe(string topic)
+        {
+            lock (Subscribers)
+            {
+                var key = topic;
+                AssertUtils.IsTrue(!Subscribers.Contains(key), "重复订阅");
+                Subscribers.Add(key);
+            }
+        }
         #endregion
     }
 }
