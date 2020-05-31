@@ -86,26 +86,28 @@ namespace Aix.MessageBus.RabbitMQ.Impl
 
             var prefetchCount = _options.ManualCommitBatch;  //最大值：ushort.MaxValue
             _channel.BasicQos(0, prefetchCount, false); //客户端最多保留这么多条未确认的消息 只有autoack=false 有用
-            var consumer = new EventingBasicConsumer(_channel);
-            consumer.Received += Received;
+            var consumer = new AsyncEventingBasicConsumer(_channel);//EventingBasicConsumer 同步
+
+            consumer.Received += Consumer_Received;
             consumer.Shutdown += Consumer_Shutdown;
 
             String consumerTag = _channel.BasicConsume(queue, _autoAck, topic, consumer);
             return Task.CompletedTask;
         }
 
-        private void Consumer_Shutdown(object sender, ShutdownEventArgs e)
+        private Task Consumer_Shutdown(object sender, ShutdownEventArgs e)
         {
             _logger.LogInformation($"RabbitMQ关闭消费者，reason:{e.ReplyText}");
+            return Task.CompletedTask;
         }
 
-        private void Received(object sender, BasicDeliverEventArgs deliverEventArgs)
+        private async Task Consumer_Received(object sender, BasicDeliverEventArgs deliverEventArgs)
         {
             if (!_isStart) return; //这里有必要的，关闭时已经手工提交了，由于客户端还有累计消息会继续执行，但是不能确认（连接已关闭）
             try
             {
                 var data = _options.Serializer.Deserialize<RabbitMessageBusData>(deliverEventArgs.Body.ToArray());
-                var isSuccess = Handler(data);
+                var isSuccess = await Handler(data);
                 if (isSuccess == false)
                 {
                     ExecuteErrorToDelayTask(data);
@@ -189,23 +191,23 @@ namespace Aix.MessageBus.RabbitMQ.Impl
         /// </summary>
         /// <param name="obj"></param>
         /// <returns></returns>
-        private bool Handler(RabbitMessageBusData obj)
+        private async Task<bool> Handler(RabbitMessageBusData obj)
         {
             var isSuccess = true; //失败标识需要重试
             if (OnMessage == null) return isSuccess;
 
             try
             {
-                OnMessage(obj).GetAwaiter().GetResult();
+                await OnMessage(obj);
             }
             catch (RetryException ex)
             {
                 isSuccess = false;
-                _logger.LogError($"rabbitMQ消费失败重试, topic={obj.Type}，group={obj.GroupId}，ErrorCount={obj.ErrorCount}，{ex.Message}, {ex.StackTrace}");
+                _logger.LogError(ex, $"rabbitMQ消费失败重试, topic={obj.Type}，group={obj.GroupId}，ErrorCount={obj.ErrorCount}");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"rabbitMQ消费失败, topic={obj.Type}，group={obj.GroupId}，{ex.Message}, {ex.StackTrace}");
+                _logger.LogError(ex, $"rabbitMQ消费失败, topic={obj.Type}，group={obj.GroupId}");
             }
             return isSuccess;
         }

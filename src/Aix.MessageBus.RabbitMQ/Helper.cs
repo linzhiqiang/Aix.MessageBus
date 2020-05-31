@@ -56,7 +56,7 @@ namespace Aix.MessageBus.RabbitMQ
         public static List<string> GetDelayTopicList(RabbitMQMessageBusOptions options)
         {
             List<string> delayTopics = new List<string>();
-            foreach (var item in options.DelayQueueConfig)
+            foreach (var item in options.GetDelayQueueConfig())
             {
                 var temp = GetDelayTopic(options, item.Value);
                 delayTopics.Add(temp);
@@ -68,18 +68,18 @@ namespace Aix.MessageBus.RabbitMQ
         {
             var dealySecond = (int)delay.TotalSeconds;
 
-            var keys = options.DelayQueueConfig.Keys.ToList();
+            var keys = options.GetDelayQueueConfig().Keys.ToList();
 
             //for (int i = 0; i < keys.Count; i++)
             for (int i = keys.Count-1; i >=0; i--)
             {
                 if (dealySecond > keys[i])
                 {
-                    return GetDelayTopic(options, options.DelayQueueConfig[keys[i]]);
+                    return GetDelayTopic(options, options.GetDelayQueueConfig()[keys[i]]);
                 }
             }
 
-            return GetDelayTopic(options, options.DelayQueueConfig[keys[0]]);
+            return GetDelayTopic(options, options.GetDelayQueueConfig()[keys[0]]);
 
         }
 

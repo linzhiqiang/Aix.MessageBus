@@ -1,62 +1,57 @@
-﻿using Aix.MessageBus.Utils;
-using Confluent.Kafka;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Confluent.Kafka;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Text;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Aix.MessageBus.Exceptions;
+using System.Linq;
+using System.Collections.Concurrent;
+using Aix.MessageBus.Utils;
+using Aix.MessageBus.Kafka.Model;
 
 namespace Aix.MessageBus.Kafka.Impl
 {
-    /// <summary>
-    /// kafka消费者
-    /// </summary>
-    /// <typeparam name="TKey"></typeparam>
-    /// <typeparam name="TValue"></typeparam>
-    internal class KafkaConsumer<TKey, TValue> : IKafkaConsumer<TKey, TValue>
+    internal class KafkaDelayConsumer : IKafkaDelayConsumer
     {
         private IServiceProvider _serviceProvider;
-        private ILogger<KafkaConsumer<TKey, TValue>> _logger;
+        private ILogger<KafkaDelayConsumer> _logger;
         private KafkaMessageBusOptions _kafkaOptions;
 
+        private string _topic;
+        private TimeSpan _delay;
 
-        IConsumer<TKey, TValue> _consumer = null;
+        IKafkaProducer<string, KafkaMessageBusData> _producer = null;
+        IConsumer<string, KafkaMessageBusData> _consumer = null;
         /// <summary>
         /// 存储每个分区的最大offset，针对手工提交 
         /// </summary>
         private ConcurrentDictionary<TopicPartition, TopicPartitionOffset> _currentOffsets = new ConcurrentDictionary<TopicPartition, TopicPartitionOffset>();
         private volatile bool _isStart = false;
         private int Count = 0;
-        private DateTime LastCommitTime = DateTime.MaxValue;
-
-        public event Func<ConsumeResult<TKey, TValue>, Task> OnMessage;
-        public KafkaConsumer(IServiceProvider serviceProvider)
+        public KafkaDelayConsumer(IServiceProvider serviceProvider, string topic, TimeSpan delay, IKafkaProducer<string, KafkaMessageBusData> producer)
         {
             _serviceProvider = serviceProvider;
+            _topic = topic;
+            _delay = delay;
+            _producer = producer;
 
-            _logger = serviceProvider.GetService<ILogger<KafkaConsumer<TKey, TValue>>>();
+            _logger = serviceProvider.GetService<ILogger<KafkaDelayConsumer>>();
             _kafkaOptions = serviceProvider.GetService<KafkaMessageBusOptions>();
         }
 
-        public async Task Subscribe(string topic, string groupId, CancellationToken cancellationToken)
+        public Task Subscribe(CancellationToken cancellationToken)
         {
-            //return Task.Run(async () =>
-            //{
-            //    _isStart = true;
-            //    this._consumer = this.CreateConsumer(groupId);
-            //    this._consumer.Subscribe(topic);
-            //    await StartPoll(cancellationToken);
-            //});
-
-            _isStart = true;
-            this._consumer = this.CreateConsumer(groupId);
-            this._consumer.Subscribe(topic);
-            await StartPoll(cancellationToken);
+            string topic = this._topic;
+            string groupId = "delaygroupId";
+            return Task.Run(async () =>
+            {
+                _isStart = true;
+                this._consumer = this.CreateConsumer(groupId);
+                this._consumer.Subscribe(topic);
+                await StartPoll(cancellationToken);
+            });
         }
 
         public void Close()
@@ -67,9 +62,9 @@ namespace Aix.MessageBus.Kafka.Impl
                 if (this._isStart == false) return;
                 this._isStart = false;
             }
-            _logger.LogInformation("Kafka关闭消费者");
+            _logger.LogInformation("Kafka关闭延迟消费者");
             ManualCommitOffset();
-            With.NoException(_logger, () => { this._consumer?.Close(); }, "关闭消费者");
+            With.NoException(_logger, () => { this._consumer?.Close(); }, "关闭延迟消费者");
         }
 
         public void Dispose()
@@ -83,8 +78,7 @@ namespace Aix.MessageBus.Kafka.Impl
         {
             Task.Factory.StartNew(async () =>
             {
-                _logger.LogInformation("开始消费数据...");
-                LastCommitTime = DateTime.Now;
+                _logger.LogInformation("开始延迟消费数据...");
                 try
                 {
                     while (_isStart && !cancellationToken.IsCancellationRequested)
@@ -95,25 +89,25 @@ namespace Aix.MessageBus.Kafka.Impl
                         }
                         catch (OperationCanceledException)
                         {
-                            //_logger.LogError(ex, $"消费异常退出消费循环OperationCanceledException，操作取消");
+                            //_logger.LogError(ex, $"延迟消费异常退出消费循环OperationCanceledException，操作取消");
                         }
                         catch (ConsumeException ex)
                         {
-                            _logger.LogError(ex, $"消费拉取消息ConsumeException");
+                            _logger.LogError(ex, $"延迟消费拉取消息ConsumeException");
                         }
                         catch (KafkaException ex)
                         {
-                            _logger.LogError(ex, $"消费拉取消息KafkaException");
+                            _logger.LogError(ex, $"延迟消费拉取消息KafkaException");
                         }
                         catch (Exception ex)
                         {
-                            _logger.LogError(ex, $"消费拉取消息系统异常Exception");
+                            _logger.LogError(ex, $"延迟消费拉取消息系统异常Exception");
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, $"消费异常退出消费循环Exception");
+                    _logger.LogError(ex, $"延迟消费异常退出消费循环Exception");
                 }
                 finally
                 {
@@ -133,54 +127,18 @@ namespace Aix.MessageBus.Kafka.Impl
                 // if (result == null || result.IsPartitionEOF || result.Value == null)
                 if (result == null || result.IsPartitionEOF || result.Message == null || result.Message.Value == null)
                 {
+                    await Task.Delay((int)_delay.TotalMilliseconds - 1000, cancellationToken);
                     return;
                 }
                 //消费数据
-                await Handler(result);
+                await Handler(result, cancellationToken);
 
                 //处理手动提交
                 ManualCommitOffset(result); //采用后提交（至少一次）,消费前提交（至多一次）
             }
             finally
             {
-                ManualTimeoutCommitOffset();
-            }
-        }
 
-
-        /// <summary>
-        /// 手工提交offset
-        /// </summary>
-        /// <param name="result"></param>
-        private void ManualCommitOffset(ConsumeResult<TKey, TValue> result)
-        {
-            //处理手动提交
-            if (EnableAutoCommit() == false)
-            {
-                Count++;
-                var topicPartition = result.TopicPartition;
-                var topicPartitionOffset = new TopicPartitionOffset(topicPartition, result.Offset + 1);
-                AddToOffsetDict(topicPartition, topicPartitionOffset); //加入offset缓存 
-
-                if (Count % _kafkaOptions.ManualCommitBatch == 0)
-                {
-                    ManualCommitOffset();
-                }
-            }
-        }
-
-        /// <summary>
-        /// 超过配置时间提交
-        /// </summary>
-        private void ManualTimeoutCommitOffset()
-        {
-            if (_kafkaOptions.ManualCommitIntervalSecond > 0 && EnableAutoCommit() == false)
-            {
-                var isTimeout = (DateTime.Now - LastCommitTime).TotalSeconds > _kafkaOptions.ManualCommitIntervalSecond;
-                if (isTimeout)
-                {
-                    ManualCommitOffset();
-                }
             }
         }
 
@@ -191,19 +149,8 @@ namespace Aix.MessageBus.Kafka.Impl
         {
             With.NoException(_logger, () =>
             {
-                //foreach (var item in _currentOffsets)
-                //{
-                //    // _logger.LogInformation($"--------------------手动提交偏移量分区：{ item.Key.Partition.Value}----------------");
-                //    With.NoException(_logger, () =>
-                //    {
-                //        this._consumer.Commit(new[] { item.Value });
-                //    }, $"手动提交偏移量分区：{item.Key.Partition.Value}");
-                //}
-
                 if (_currentOffsets.Count > 0)
                 {
-                    LastCommitTime = DateTime.Now;
-                    // _logger.LogInformation($"--------------------手动提交偏移量分区：{ string.Join(",", _currentOffsets.Values)}----------------");
                     this._consumer.Commit(_currentOffsets.Values);
                 }
             }, "手动提交所有分区错误");
@@ -217,18 +164,52 @@ namespace Aix.MessageBus.Kafka.Impl
             _currentOffsets.Clear();
         }
 
-        private async Task Handler(ConsumeResult<TKey, TValue> consumeResult)
+        /// <summary>
+        /// 手工提交offset
+        /// </summary>
+        /// <param name="result"></param>
+        private void ManualCommitOffset(ConsumeResult<string, KafkaMessageBusData> result)
         {
-            if (OnMessage == null) return;
+            //处理手动提交
+            if (EnableAutoCommit() == false)
+            {
+                Count++;
+                var topicPartition = result.TopicPartition;
+                var topicPartitionOffset = new TopicPartitionOffset(topicPartition, result.Offset + 1);
+                AddToOffsetDict(topicPartition, topicPartitionOffset); //加入offset缓存 
+
+                // if (Count % _kafkaOptions.ManualCommitBatch == 0)
+                {
+                    ManualCommitOffset();
+                }
+            }
+        }
+
+        private async Task Handler(ConsumeResult<string, KafkaMessageBusData> consumeResult, CancellationToken cancellationToken)
+        {
             try
             {
-                await OnMessage(consumeResult);
+                var messageBusData = consumeResult.Message.Value;
+                var delayTime = TimeSpan.FromMilliseconds(messageBusData.ExecuteTimeStamp - DateUtils.GetTimeStamp(DateTime.Now));
+                //_logger.LogInformation($"------------{DateTime.Now.ToString("HH:mm:ss fff")}---------------{delayTime.TotalSeconds}----------------------------------------------");
+                if (delayTime > TimeSpan.Zero)
+                {
+                    await Task.Delay(delayTime, cancellationToken); // 这里超过10秒也不行，生产者内部会出错的 ,delay不太精准
+                }
+                //插入及时队列
+
+                await _producer.ProduceAsync(messageBusData.Topic, consumeResult.Message);
+            }
+            catch (OperationCanceledException)
+            {
+                // _logger.LogError(ex, $"kafka延迟消费失败OperationCanceledException，操作取消");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "kafka消费失败");
+                _logger.LogError(ex, "kafka延迟消费失败");
             }
         }
+
         private void AddToOffsetDict(TopicPartition topicPartition, TopicPartitionOffset TopicPartitionOffset)
         {
             _currentOffsets.AddOrUpdate(topicPartition, TopicPartitionOffset, (key, oldValue) =>
@@ -241,7 +222,7 @@ namespace Aix.MessageBus.Kafka.Impl
         /// 创建消费者对象
         /// </summary>
         /// <returns></returns>
-        private IConsumer<TKey, TValue> CreateConsumer(string groupId)
+        private IConsumer<string, KafkaMessageBusData> CreateConsumer(string groupId)
         {
             if (_kafkaOptions.ConsumerConfig == null) _kafkaOptions.ConsumerConfig = new ConsumerConfig();
 
@@ -265,13 +246,15 @@ namespace Aix.MessageBus.Kafka.Impl
                 config["group.id"] = groupId;
             }
 
-            var builder = new ConsumerBuilder<TKey, TValue>(config)
+            var consumerConfig = new ConsumerConfig(config);
+            consumerConfig.EnableAutoCommit = false;
+            var builder = new ConsumerBuilder<string, KafkaMessageBusData>(consumerConfig)
                  .SetErrorHandler((producer, error) =>
                  {
                      if (error.IsFatal || error.IsBrokerError)
                      {
                          string errorInfo = $"Code:{error.Code}, Reason:{error.Reason}, IsFatal={error.IsFatal}, IsLocalError:{error.IsLocalError}, IsBrokerError:{error.IsBrokerError}";
-                         _logger.LogError($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}Kafka消费者出错：{errorInfo}");
+                         _logger.LogError($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}Kafka延迟消费者出错：{errorInfo}");
                      }
                  })
                  .SetPartitionsRevokedHandler((c, partitions) =>
@@ -292,7 +275,7 @@ namespace Aix.MessageBus.Kafka.Impl
                      }
                      _logger.LogInformation($"MemberId:{c.MemberId}分配的分区：Assigned partitions: [{string.Join(", ", partitions)}]");
                  })
-               .SetValueDeserializer(new ConfluentKafkaSerializerAdapter<TValue>(_kafkaOptions.Serializer));
+               .SetValueDeserializer(new ConfluentKafkaSerializerAdapter<KafkaMessageBusData>(_kafkaOptions.Serializer));
 
             //以下是内置的
             //if (typeof(TKey) == typeof(Null)) builder.SetKeyDeserializer((IDeserializer<TKey>)Confluent.Kafka.Deserializers.Null);
@@ -315,8 +298,7 @@ namespace Aix.MessageBus.Kafka.Impl
         /// <returns></returns>
         private bool EnableAutoCommit()
         {
-            var enableAutoCommit = this._kafkaOptions.ConsumerConfig.EnableAutoCommit;
-            return !enableAutoCommit.HasValue || enableAutoCommit.Value == true;
+            return false;
         }
 
         #endregion

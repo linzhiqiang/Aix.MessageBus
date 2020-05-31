@@ -39,7 +39,7 @@ namespace Sample
 
         public Task StopAsync(CancellationToken cancellationToken)
         {
-            Console.WriteLine("StopAsync");
+            _logger.LogInformation("StopAsync");
             return Task.CompletedTask;
         }
 
@@ -50,15 +50,15 @@ namespace Sample
                 {
                     //订阅
                     SubscribeOptions subscribeOptions = new SubscribeOptions();
-                    subscribeOptions.GroupId = "group1";
-                    subscribeOptions.ConsumerThreadCount = 4;
+                    //subscribeOptions.GroupId = "group1";
+                    //subscribeOptions.ConsumerThreadCount = 4;
                     await _messageBus.SubscribeAsync<BusinessMessage>(async (message) =>
                     {
                         var current = Interlocked.Increment(ref Count);
                         _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}消费--1--数据：MessageId={message.MessageId},Content={message.Content},count={current}");
                         // throw new Exception();
                         // await Task.Delay(100);
-                        // throw new RetryException();
+                       // throw new RetryException();
                         await Task.CompletedTask;
                     }, subscribeOptions, cancellationToken);
                 }

@@ -13,11 +13,15 @@ namespace Aix.MessageBus.Foundation.EventLoop
     public class ScheduledRunnable : IScheduledRunnable
     {
         public long TimeStamp { get; }
+
         IRunnable _action;
+
+        public object state { get; set; }
 
         public ScheduledRunnable(IRunnable runnable, long timeStamp)
         {
             _action = runnable;
+            this.state = runnable.state;
             TimeStamp = timeStamp;
         }
 
@@ -26,9 +30,9 @@ namespace Aix.MessageBus.Foundation.EventLoop
             return (int)(this.TimeStamp - other.TimeStamp);
         }
 
-        public Task Run()
+        public Task Run(object state)
         {
-            return _action.Run();
+            return _action.Run(state);
         }
 
     }

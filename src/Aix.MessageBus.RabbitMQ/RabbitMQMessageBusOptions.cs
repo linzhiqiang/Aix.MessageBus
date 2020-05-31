@@ -6,8 +6,7 @@ namespace Aix.MessageBus.RabbitMQ
 {
     public class RabbitMQMessageBusOptions
     {
-        private int[] DefaultRetryStrategy = new int[] { 1, 5, 10, 30, 60, 60, 2 * 60, 2 * 60, 5 * 60, 5 * 60 };
-
+        private int[] DefaultRetryStrategy = new int[] { 1, 5, 10, 30, 60, 2 * 60, 2 * 60, 2 * 60, 5 * 60, 5 * 60 };
         /// <summary>
         /// 默认延迟队列 延迟时间配置  （秒，延迟队列名称后缀）
         /// </summary>
@@ -78,15 +77,13 @@ namespace Aix.MessageBus.RabbitMQ
         /// </summary>
         public ushort ManualCommitBatch { get; set; }
 
-        private Dictionary<int, string> _delayQueueConfig;
-        public Dictionary<int, string> DelayQueueConfig
+        public Dictionary<int, string> DelayQueueConfig { get; set; }
+
+
+        public Dictionary<int, string> GetDelayQueueConfig()
         {
-            get
-            {
-                if (_delayQueueConfig != null && _delayQueueConfig.Count == 0) _delayQueueConfig = DefaultDelayQueueConfig;
-                return _delayQueueConfig;
-            }
-            set { _delayQueueConfig = value; }
+            if (DelayQueueConfig == null || DelayQueueConfig.Count == 0) return DefaultDelayQueueConfig;
+            return DelayQueueConfig;
         }
 
         /// <summary>

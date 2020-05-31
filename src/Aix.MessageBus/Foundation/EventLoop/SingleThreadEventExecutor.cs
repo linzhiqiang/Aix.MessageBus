@@ -8,10 +8,11 @@ using System.Threading.Tasks;
 namespace Aix.MessageBus.Foundation.EventLoop
 {
     /// <summary>
-    /// 单线程事件循环
+    /// 单线程任务执行器
     /// </summary>
-    public class SingleThreadEventExecutor : IEventExecutor
+    class SingleThreadTaskExecutor : ITaskExecutor
     {
+        public static int MaxTaskCount = int.MaxValue;
         IBlockingQueue<IRunnable> _taskQueue = QueueFactory.Instance.CreateBlockingQueue<IRunnable>();
         protected readonly PriorityQueue<IScheduledRunnable> ScheduledTaskQueue = new PriorityQueue<IScheduledRunnable>();
         volatile bool _isStart = false;
@@ -20,11 +21,12 @@ namespace Aix.MessageBus.Foundation.EventLoop
         {
             Task.Factory.StartNew(async () =>
             {
-                while (true)
+                while (_isStart)
                 {
                     try
                     {
-                        await RunTasks();
+                        var action = _taskQueue.Dequeue();
+                        await action.Run(action.state);
                     }
                     catch (Exception ex)
                     {
@@ -34,20 +36,11 @@ namespace Aix.MessageBus.Foundation.EventLoop
             }, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         }
 
-        private async Task RunTasks()
-        {
-            var item = _taskQueue.Dequeue();
-            if (item != null)
-            {
-                await item.Run();
-            }
-        }
-
         private void StartRunDelayTask()
         {
             Task.Factory.StartNew(async () =>
             {
-                while (true)
+                while (_isStart)
                 {
                     try
                     {
@@ -86,7 +79,6 @@ namespace Aix.MessageBus.Foundation.EventLoop
             }
 
         }
-
         private async Task handlerException(Exception ex)
         {
             if (OnException != null)
@@ -95,51 +87,57 @@ namespace Aix.MessageBus.Foundation.EventLoop
             }
         }
 
-        #region IEventExecutor
+        #region ITaskExecutor
 
         public event Func<Exception, Task> OnException;
 
+        public ITaskExecutor GetSingleThreadTaskExecutor(int routeId)
+        {
+            return this;
+        }
+        public void Execute(Func<object, Task> action, object state)
+        {
+            Execute(new TaskRunnable(action, state));
+        }
+
         public void Execute(IRunnable task)
         {
+            if (this._taskQueue.Count > MaxTaskCount) throw new Exception($"即时任务队列超过{MaxTaskCount}条");
             _taskQueue.Enqueue(task);
         }
 
-        public void Execute(Func<Task> action)
+        public void Schedule(IRunnable action, TimeSpan delay)
         {
-            Execute(new TaskRunnable(action));
+            Schedule(new ScheduledRunnable(action, DateUtils.GetTimeStamp(DateTime.Now.Add(delay))));
+        }
+
+        public void Schedule(Func<object, Task> action, object state, TimeSpan delay)
+        {
+            Schedule(new TaskRunnable(action, state), delay);
         }
 
         private void Schedule(IScheduledRunnable task)
         {
-            this.Execute(() =>
+            this.Execute((state) =>
             {
                 lock (ScheduledTaskQueue)
                 {
+                    if (this.ScheduledTaskQueue.Count > MaxTaskCount) throw new Exception($"延迟任务队列超过{MaxTaskCount}条");
                     this.ScheduledTaskQueue.Enqueue(task);
                     Monitor.Pulse(ScheduledTaskQueue);
                 }
                 return Task.CompletedTask;
-            });
-        }
-        public void Schedule(IRunnable action, TimeSpan delay)
-        {
-            if (delay <= TimeSpan.Zero)
-            {
-                Execute(action);
-                return;
-            }
-            Schedule(new ScheduledRunnable(action, DateUtils.GetTimeStamp(DateTime.Now.Add(delay))));
-        }
-
-        public void Schedule(Func<Task> action, TimeSpan delay)
-        {
-            Schedule(new TaskRunnable(action), delay);
+            }, null);
         }
 
         public void Start()
         {
             if (_isStart) return;
-            _isStart = true;
+            lock (this)
+            {
+                if (_isStart) return;
+                _isStart = true;
+            }
 
             Task.Run(() =>
             {
@@ -150,6 +148,7 @@ namespace Aix.MessageBus.Foundation.EventLoop
 
         public void Stop()
         {
+            //Console.WriteLine("--------------stop SingleThreadTaskExecutor-------------------");
             if (this._isStart == false) return;
             lock (this)
             {
@@ -158,13 +157,13 @@ namespace Aix.MessageBus.Foundation.EventLoop
                     this._isStart = false;
                 }
             }
-
         }
 
         public void Dispose()
         {
             this.Stop();
         }
+
         #endregion
     }
 }

@@ -9,6 +9,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Sample
@@ -27,9 +28,9 @@ namespace Sample
             {
                 setting.CaseSensitive = false;
             });
-            //Parser.Default.ParseArguments<CmdOptions>(args).WithParsed(Run);
             parser.ParseArguments<CmdOptions>(args).WithParsed(Run);
         }
+
         static void Run(CmdOptions options)
         {
             TaskScheduler.UnobservedTaskException += TaskScheduler_UnobservedTaskException;
@@ -46,6 +47,7 @@ namespace Sample
                 })
                 .ConfigureLogging((context, factory) =>
                 {
+                    factory.ClearProviders();
                     factory.AddConsole();
                 })
                 .ConfigureServices((context, services) =>
@@ -63,11 +65,13 @@ namespace Sample
                     switch (messagebusType)
                     {
                         case 0:
-                             var memoryMessageBusOptions = context.Configuration.GetSection("memoryMessageBus").Get<InMemoryMessageBusOptions>();
+                            var memoryMessageBusOptions = context.Configuration.GetSection("memoryMessageBus").Get<InMemoryMessageBusOptions>();
                             services.AddInMemoryMessageBus(memoryMessageBusOptions);
                             break;
                         case 1:
                             var kafkaMessageBusOptions = context.Configuration.GetSection("kafka").Get<KafkaMessageBusOptions>();
+                            var cancellationDelayMaxMs = context.Configuration.GetSection("kafka:ConsumerConfig:CancellationDelayMaxMs").Get<int?>();
+                            if (cancellationDelayMaxMs.HasValue) kafkaMessageBusOptions.ConsumerConfig.CancellationDelayMaxMs = cancellationDelayMaxMs.Value;
                             services.AddKafkaMessageBus(kafkaMessageBusOptions);
                             break;
                         case 2:

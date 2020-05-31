@@ -30,15 +30,22 @@ namespace Aix.MessageBus
         InMemoryMessageBusOptions _options;
 
         ConcurrentDictionary<string, List<InMemorySubscriberInfo>> _subscriberDict = new ConcurrentDictionary<string, List<InMemorySubscriberInfo>>();
-        MultithreadEventLoopGroup Eventloop;
+        ITaskExecutor Eventloop;
 
         public InMemoryMessageBus(IServiceProvider serviceProvider, ILogger<InMemoryMessageBus> logger, InMemoryMessageBusOptions options)
         {
             _serviceProvider = serviceProvider;
             _logger = logger;
             _options = options;
-            Eventloop = new MultithreadEventLoopGroup(_options.ConsumerThreadCount);
+            Eventloop = new MultithreadTaskExecutor(_options.ConsumerThreadCount);
+            Eventloop.OnException += Eventloop_OnException;
             Eventloop.Start();
+        }
+
+        private Task Eventloop_OnException(Exception arg)
+        {
+            _logger.LogError(arg, "任务执行器出错");
+            return Task.CompletedTask;
         }
 
         public async Task PublishAsync(Type messageType, object message)
@@ -57,22 +64,22 @@ namespace Aix.MessageBus
                     if (this._cancellationToken != null && this._cancellationToken.IsCancellationRequested)
                         continue;
 
-                    Func<Task> task = async () =>
-                   {
-                       if (this._cancellationToken != null && this._cancellationToken.IsCancellationRequested) return;
-                       await With.NoException(_logger, () =>
-                       {
-                           return item.Action(message);
-                       }, $"执行出错,{item.Type.FullName}");
+                    Func<object, Task> task = async (state) =>
+                    {
+                        if (this._cancellationToken != null && this._cancellationToken.IsCancellationRequested) return;
+                        await With.NoException(_logger, () =>
+                        {
+                            return item.Action(message);
+                        }, $"执行出错,{item.Type.FullName}");
 
-                   };
+                    };
                     if (delay <= TimeSpan.Zero)
                     {
-                        Eventloop.GetNext().Execute(task);
+                        Eventloop.Execute(task, null);
                     }
                     else
                     {
-                        Eventloop.GetNext().Schedule(task, delay);
+                        Eventloop.Schedule(task, null, delay);
                     }
                 }
             }

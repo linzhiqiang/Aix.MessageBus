@@ -7,20 +7,25 @@ namespace Aix.MessageBus.Foundation.EventLoop
 {
     public interface IRunnable
     {
-        Task Run();
+        object state { get; }
+        Task Run(object state = null);
     }
 
     public class TaskRunnable : IRunnable
     {
-        Func<Task> _action;
-        public TaskRunnable(Func<Task> action)
+        Func<object, Task> _action;
+        public TaskRunnable(Func<object, Task> action, object state)
         {
             _action = action;
+            this.state = state;
 
         }
-        public Task Run()
+
+        public object state { get; set; }
+
+        public Task Run(object state = null)
         {
-            return _action();
+            return _action(state);
         }
     }
 }

@@ -66,7 +66,6 @@ namespace Aix.MessageBus.Redis.BackgroundProcess
 
             if (delay > 0)
             {
-
                 await Task.Delay(Math.Min((int)delay, 1000));
             }
         }

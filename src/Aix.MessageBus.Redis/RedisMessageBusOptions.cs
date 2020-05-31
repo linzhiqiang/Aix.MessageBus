@@ -7,7 +7,7 @@ namespace Aix.MessageBus.Redis
 {
     public class RedisMessageBusOptions
     {
-        private int[] DefaultRetryStrategy = new int[] { 1, 5, 10, 30, 60, 60, 2 * 60, 2 * 60, 5 * 60, 5 * 60 };
+        private int[] DefaultRetryStrategy = new int[] { 1, 5, 10, 30, 60, 2 * 60, 2 * 60, 2 * 60, 5 * 60, 5 * 60 };
         public RedisMessageBusOptions()
         {
             this.TopicPrefix = "redis:messagebus:";

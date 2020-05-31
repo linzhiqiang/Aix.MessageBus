@@ -57,7 +57,7 @@ namespace Aix.MessageBus.RabbitMQ.Impl
                 arguments: null
                );
 
-            foreach (var item in _options.DelayQueueConfig)
+            foreach (var item in _options.GetDelayQueueConfig())
             {
                 var delayMillTime = item.Key * 1000;
 
