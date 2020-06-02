@@ -111,7 +111,7 @@ namespace Aix.MessageBus.Kafka.Impl
                 }
                 finally
                 {
-                    _logger.LogInformation("退出消费循环 关闭消费者...");
+                    _logger.LogInformation("退出延迟消费循环 关闭消费者...");
                     this.Close();
                 }
             });
@@ -121,25 +121,16 @@ namespace Aix.MessageBus.Kafka.Impl
 
         private async Task Consumer(CancellationToken cancellationToken)
         {
-            try
+            var result = this._consumer.Consume(cancellationToken);// cancellationToken默认100毫秒
+            if (result == null || result.IsPartitionEOF || result.Message == null || result.Message.Value == null)
             {
-                var result = this._consumer.Consume(cancellationToken);// cancellationToken默认100毫秒
-                // if (result == null || result.IsPartitionEOF || result.Value == null)
-                if (result == null || result.IsPartitionEOF || result.Message == null || result.Message.Value == null)
-                {
-                    await Task.Delay((int)_delay.TotalMilliseconds - 1000, cancellationToken);
-                    return;
-                }
-                //消费数据
-                await Handler(result, cancellationToken);
-
-                //处理手动提交
-                ManualCommitOffset(result); //采用后提交（至少一次）,消费前提交（至多一次）
+                return;
             }
-            finally
-            {
+            //消费数据
+            await Handler(result, cancellationToken);
 
-            }
+            //处理手动提交
+            ManualCommitOffset(result); //采用后提交（至少一次）,消费前提交（至多一次）
         }
 
         /// <summary>
@@ -185,20 +176,54 @@ namespace Aix.MessageBus.Kafka.Impl
             }
         }
 
+        private TimeSpan MinTimeSpan(params TimeSpan[] timeSpans)
+        {
+            if (timeSpans == null || timeSpans.Length == 0) return TimeSpan.Zero;
+
+            var min = timeSpans[0];
+            foreach (var item in timeSpans)
+            {
+                if (min > item)
+                {
+                    min = item;
+                }
+            }
+            return min;
+
+        }
+
+        private TimeSpan GetMaxPollIntervalMs()
+        {
+            //var maxPoll = _kafkaOptions.ConsumerConfig.MaxPollIntervalMs;
+            //if (maxPoll.HasValue) return TimeSpan.FromMilliseconds(maxPoll.Value);
+            return TimeSpan.FromSeconds(60);
+        }
+
         private async Task Handler(ConsumeResult<string, KafkaMessageBusData> consumeResult, CancellationToken cancellationToken)
         {
             try
             {
                 var messageBusData = consumeResult.Message.Value;
-                var delayTime = TimeSpan.FromMilliseconds(messageBusData.ExecuteTimeStamp - DateUtils.GetTimeStamp(DateTime.Now));
+                var delay = TimeSpan.FromMilliseconds(messageBusData.ExecuteTimeStamp - DateUtils.GetTimeStamp(DateTime.Now));
                 //_logger.LogInformation($"------------{DateTime.Now.ToString("HH:mm:ss fff")}---------------{delayTime.TotalSeconds}----------------------------------------------");
-                if (delayTime > TimeSpan.Zero)
+                if (delay > TimeSpan.Zero)
                 {
-                    await Task.Delay(delayTime, cancellationToken); // 这里超过10秒也不行，生产者内部会出错的 ,delay不太精准
+                    var minDelay = MinTimeSpan(GetMaxPollIntervalMs(), delay, this._delay);
+                    await Task.Delay(minDelay, cancellationToken); // 这里超过300秒也不行，生产者内部会出错的 ,delay不太精准
                 }
-                //插入及时队列
 
-                await _producer.ProduceAsync(messageBusData.Topic, consumeResult.Message);
+                delay = TimeSpan.FromMilliseconds(messageBusData.ExecuteTimeStamp - DateUtils.GetTimeStamp(DateTime.Now));
+                if (delay > TimeSpan.Zero)
+                {
+                    //继续插入队列
+                    var delayTopic = Helper.GetDelayTopic(_kafkaOptions, delay);
+                    await _producer.ProduceAsync(delayTopic, consumeResult.Message);
+                }
+                else
+                {
+                    //插入及时队列
+                    await _producer.ProduceAsync(messageBusData.Topic, consumeResult.Message);
+                }
             }
             catch (OperationCanceledException)
             {

@@ -23,18 +23,13 @@ namespace Sample
             _messageBus = messageBus;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
-            Task.Run(async () =>
-            {
-                List<Task> taskList = new List<Task>(); //多个订阅者
-                taskList.Add(Subscribe(cancellationToken));
-                // taskList.Add(Subscribe2(cancellationToken));
+            List<Task> taskList = new List<Task>(); //多个订阅者
+            taskList.Add(Subscribe(cancellationToken));
+            // taskList.Add(Subscribe2(cancellationToken));
 
-                await Task.WhenAll(taskList.ToArray());
-            });
-
-            return Task.CompletedTask;
+            await Task.WhenAll(taskList.ToArray());
         }
 
         public Task StopAsync(CancellationToken cancellationToken)

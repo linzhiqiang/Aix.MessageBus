@@ -53,6 +53,7 @@ namespace Aix.MessageBus.Kafka
         public async Task PublishDelayAsync(Type messageType, object message, TimeSpan delay)
         {
             throw new NotImplementedException("kafka未实现延迟任务"); //建议使用数据库实现或 数据库加redis实现
+            /*
             if (delay <= TimeSpan.Zero)
             {
                 await PublishAsync(messageType, message);
@@ -64,12 +65,13 @@ namespace Aix.MessageBus.Kafka
             var data = new KafkaMessageBusData { Topic = topic, Data = _kafkaOptions.Serializer.Serialize(message), ExecuteTimeStamp = DateUtils.GetTimeStamp(DateTime.Now.Add(delay)) };
 
             await _producer.ProduceAsync(delayTopic, new Message<string, KafkaMessageBusData> { Key = null, Value = data });
+    */
         }
 
         public async Task SubscribeAsync<T>(Func<T, Task> handler, SubscribeOptions subscribeOptions = null, CancellationToken cancellationToken = default(CancellationToken)) where T : class
         {
             cancellationToken = Token;
-            StartDelay(cancellationToken);
+            //StartDelay(cancellationToken);
             string topic = GetTopic(typeof(T));
 
             var groupId = subscribeOptions?.GroupId;
@@ -106,7 +108,7 @@ namespace Aix.MessageBus.Kafka
                      }
                      if (isSuccess == false)
                      {
-                         await ExecuteErrorToDelayTask(consumeResult);
+                         //await ExecuteErrorToDelayTask(consumeResult);
                      }
                      //await With.NoException(_logger, async () =>
                      //{
@@ -143,7 +145,7 @@ namespace Aix.MessageBus.Kafka
         private volatile bool _isStartDelay = false;
         private void StartDelay(CancellationToken cancellationToken)
         {
-            return;
+            // return;
             cancellationToken = Token;
             if (_isStartDelay) return;
             lock (this)
@@ -171,7 +173,7 @@ namespace Aix.MessageBus.Kafka
         /// <param name="data"></param>
         private async Task ExecuteErrorToDelayTask(ConsumeResult<string, KafkaMessageBusData> consumeResult)
         {
-            return;
+            //  return;
             var messageBusData = consumeResult.Message.Value;
             if (messageBusData.ErrorCount >= _kafkaOptions.MaxErrorReTryCount) return;
             var delay = TimeSpan.FromSeconds(GetDelaySecond(messageBusData.ErrorCount));

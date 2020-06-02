@@ -127,24 +127,17 @@ namespace Aix.MessageBus.Kafka.Impl
 
         private async Task Consumer(CancellationToken cancellationToken)
         {
-            try
+            var result = this._consumer.Consume(cancellationToken);// cancellationToken默认100毫秒
+                                                                   // if (result == null || result.IsPartitionEOF || result.Value == null)
+            if (result == null || result.IsPartitionEOF || result.Message == null || result.Message.Value == null)
             {
-                var result = this._consumer.Consume(cancellationToken);// cancellationToken默认100毫秒
-                // if (result == null || result.IsPartitionEOF || result.Value == null)
-                if (result == null || result.IsPartitionEOF || result.Message == null || result.Message.Value == null)
-                {
-                    return;
-                }
-                //消费数据
-                await Handler(result);
+                return;
+            }
+            //消费数据
+            await Handler(result);
 
-                //处理手动提交
-                ManualCommitOffset(result); //采用后提交（至少一次）,消费前提交（至多一次）
-            }
-            finally
-            {
-                ManualTimeoutCommitOffset();
-            }
+            //处理手动提交
+            ManualCommitOffset(result); //采用后提交（至少一次）,消费前提交（至多一次）
         }
 
 
@@ -165,6 +158,10 @@ namespace Aix.MessageBus.Kafka.Impl
                 if (Count % _kafkaOptions.ManualCommitBatch == 0)
                 {
                     ManualCommitOffset();
+                }
+                else
+                {
+                    ManualTimeoutCommitOffset();
                 }
             }
         }

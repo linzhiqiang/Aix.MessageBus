@@ -23,4 +23,16 @@ namespace Sample
 
         public DateTime CreateTime { get; set; }
     }
+
+    [TopicAttribute(Name = "EventMessage")]
+    public class EventBase
+    {
+        [RouteKeyAttribute]
+        public string RouteId { get; set; }
+
+        public string EventName { get; set; }
+
+    }
+
+
 }

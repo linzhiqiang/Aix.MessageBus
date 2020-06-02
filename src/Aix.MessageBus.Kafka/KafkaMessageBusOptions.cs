@@ -19,12 +19,14 @@ namespace Aix.MessageBus.Kafka
         private static Dictionary<int, string> DefaultDelayQueueConfig = new Dictionary<int, string>
         {
             { (int)TimeSpan.FromSeconds(5).TotalSeconds,"5s"},
+            // { (int)TimeSpan.FromSeconds(10).TotalSeconds,"10s"},
             { (int)TimeSpan.FromSeconds(30).TotalSeconds,"30s"},
             { (int)TimeSpan.FromMinutes(1).TotalSeconds,"1m"},
-            { (int)TimeSpan.FromMinutes(2).TotalSeconds,"2m"},
-            //{ (int)TimeSpan.FromMinutes(30).TotalSeconds,"30m"},
-            //{ (int)TimeSpan.FromHours(1).TotalSeconds,"1h"},
-            //{ (int)TimeSpan.FromDays(1).TotalSeconds,"1d"},
+             { (int)TimeSpan.FromMinutes(5).TotalSeconds,"5m"},
+            { (int)TimeSpan.FromMinutes(10).TotalSeconds,"10m"},
+            { (int)TimeSpan.FromMinutes(30).TotalSeconds,"30m"},
+            { (int)TimeSpan.FromHours(1).TotalSeconds,"1h"},
+            { (int)TimeSpan.FromDays(1).TotalSeconds,"1d"},
         };
         public KafkaMessageBusOptions()
         {

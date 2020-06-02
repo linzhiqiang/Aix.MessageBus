@@ -32,17 +32,12 @@ namespace Sample
             return Task.CompletedTask;
         }
 
-        public Task StartAsync(CancellationToken cancellationToken)
+        public async Task StartAsync(CancellationToken cancellationToken)
         {
-            Task.Run(async () =>
-           {
-               List<Task> taskList = new List<Task>(); //多个订阅者
-               taskList.Add(Producer(cancellationToken));
-               // taskList.Add(ProducerDelay(cancellationToken));
-               await Task.WhenAll(taskList.ToArray());
-           });
-
-            return Task.CompletedTask;
+            List<Task> taskList = new List<Task>(); //多个订阅者
+            taskList.Add(Producer(cancellationToken));
+            // taskList.Add(ProducerDelay(cancellationToken));
+            await Task.WhenAll(taskList.ToArray());
         }
 
         public Task StopAsync(CancellationToken cancellationToken)
@@ -62,7 +57,12 @@ namespace Sample
                         if (cancellationToken.IsCancellationRequested) return;
                         var index = (int)state;
                         var messageData = new BusinessMessage { MessageId = index.ToString(), Content = $"我是内容_{index}", CreateTime = DateTime.Now };
-                        await _messageBus.PublishAsync(messageData);
+                        await _messageBus.PublishDelayAsync(messageData, TimeSpan.FromSeconds(4));
+                        //await _messageBus.PublishDelayAsync(messageData,TimeSpan.FromSeconds(29));
+                        //await _messageBus.PublishDelayAsync(messageData, TimeSpan.FromSeconds(59));
+                        //await _messageBus.PublishDelayAsync(messageData, TimeSpan.FromSeconds(299));
+                        //await _messageBus.PublishDelayAsync(messageData, TimeSpan.FromSeconds(599));
+
                         _logger.LogInformation($"{DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss fff")}生产数据：MessageId={messageData.MessageId}");
 
                     },i);
