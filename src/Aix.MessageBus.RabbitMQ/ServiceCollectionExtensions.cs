@@ -33,6 +33,7 @@ namespace Aix.MessageBus.RabbitMQ
 
                 AutomaticRecoveryEnabled = true,
                // Protocol = Protocols.DefaultProtocol
+               DispatchConsumersAsync=true
             };
             var hostNames = options.HostName.Replace(" ","").Split(new char[] { ',' , '，' }, StringSplitOptions.RemoveEmptyEntries);
            var connection =  factory.CreateConnection(hostNames);
