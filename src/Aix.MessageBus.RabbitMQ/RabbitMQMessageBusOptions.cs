@@ -12,10 +12,14 @@ namespace Aix.MessageBus.RabbitMQ
         /// </summary>
         private static Dictionary<int, string> DefaultDelayQueueConfig = new Dictionary<int, string>
         {
-           //  { (int)TimeSpan.FromSeconds(1).TotalSeconds,"1s"},
+             { (int)TimeSpan.FromSeconds(1).TotalSeconds,"1s"},
+             { (int)TimeSpan.FromSeconds(2).TotalSeconds,"2s"},
+             { (int)TimeSpan.FromSeconds(3).TotalSeconds,"3s"},
+             { (int)TimeSpan.FromSeconds(4).TotalSeconds,"4s"},
             { (int)TimeSpan.FromSeconds(5).TotalSeconds,"5s"},
             { (int)TimeSpan.FromSeconds(30).TotalSeconds,"30s"},
             { (int)TimeSpan.FromMinutes(1).TotalSeconds,"1m"},
+            { (int)TimeSpan.FromMinutes(10).TotalSeconds,"10m"},
             { (int)TimeSpan.FromMinutes(30).TotalSeconds,"30m"},
             { (int)TimeSpan.FromHours(1).TotalSeconds,"1h"},
             { (int)TimeSpan.FromDays(1).TotalSeconds,"1d"},
@@ -25,7 +29,7 @@ namespace Aix.MessageBus.RabbitMQ
             Port = 5672;
             VirtualHost = "/";
 
-            this.TopicPrefix = "rabbitmq-messagebus-";
+            //this.TopicPrefix = "rabbitmq-messagebus-";
             this.Serializer = new MessagePackSerializer();
             this.ConfirmSelect = false;
             this.DefaultConsumerThreadCount = 4;

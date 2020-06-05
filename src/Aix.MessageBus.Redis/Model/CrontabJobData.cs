@@ -30,6 +30,7 @@ namespace Aix.MessageBus.Redis.Model
 
         public string Topic { get; set; }
 
+
         /// <summary>
         /// 执行时间 
         /// </summary>
